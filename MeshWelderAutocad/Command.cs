@@ -38,7 +38,6 @@ namespace MeshWelderAutocad
         [CommandMethod("TestCom")]
         public void TestCom()
         {
-            //Пакетное создание файлов, папка на уровень выше выбранного json с именем MESH_AUTOCAD, внутри папка с именем JSON и временем, внутри папки файлы по количеству из json
             //Панель создать Ribbon
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
@@ -51,13 +50,11 @@ namespace MeshWelderAutocad
             if (result != System.Windows.Forms.DialogResult.OK)
                 return;
 
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-
             string jsonFilePath = openFileDialog.FileName;
             string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
             string jsonFileName = Path.GetFileNameWithoutExtension(jsonFilePath);
             string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string dwgDirectory = Path.Combine(jsonDirectory, $"JSON-{jsonFileName}_DWG-{timeStamp}");
+            string dwgDirectory = Path.Combine(jsonDirectory, $"DWG-{timeStamp}_JSON-{jsonFileName}");
             Directory.CreateDirectory(dwgDirectory);
 
             string jsonContent = File.ReadAllText(jsonFilePath);
@@ -65,12 +62,14 @@ namespace MeshWelderAutocad
             List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
 
 
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            //Database db = doc.Database;
             foreach (var mesh in meshs)
             {
-                Document newDoc = Application.DocumentManager.Add("DWT_PATH_HERE");
+                //Сделать метод для получения пути к шаблону в зависимости от версии автокада, может встроить шаблоны как ресурсы решения??
+                Document newDoc = Application.DocumentManager.Add(@"C:\Users\Acer\AppData\Local\Autodesk\AutoCAD 2022\R24.1\rus\Template\acad.dwt");
                 Application.DocumentManager.MdiActiveDocument = newDoc;
                 Database db = newDoc.Database;
-
                 using (DocumentLock docLock = newDoc.LockDocument(DocumentLockMode.ProtectedAutoWrite, null, null, true))
                 {
                     CreateLayer(db, "MESH");
@@ -96,12 +95,10 @@ namespace MeshWelderAutocad
                             modelSpace.AppendEntity(line);
                             tr.AddNewlyCreatedDBObject(line, true);
                         }
-                        db.SaveAs("SAVE_PATH_HERE", DwgVersion.Current);
                         tr.Commit();
                     }
                 }
-                newDoc.CloseAndDiscard();
-                Application.DocumentManager.MdiActiveDocument = doc;
+                //newDoc.CloseAndSave(Path.Combine(dwgDirectory, $"{mesh.Name}.dwg"));
             }
         }
 
