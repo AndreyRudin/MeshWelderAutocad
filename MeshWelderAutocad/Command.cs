@@ -70,6 +70,7 @@ namespace MeshWelderAutocad
                 Document newDoc = Application.DocumentManager.Add(@"C:\Users\Acer\AppData\Local\Autodesk\AutoCAD 2022\R24.1\rus\Template\acad.dwt");
                 Application.DocumentManager.MdiActiveDocument = newDoc;
                 Database db = newDoc.Database;
+
                 using (DocumentLock docLock = newDoc.LockDocument(DocumentLockMode.ProtectedAutoWrite, null, null, true))
                 {
                     CreateLayer(db, "MESH");
