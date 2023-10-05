@@ -22,7 +22,7 @@ namespace MeshWelderAutocad
 {
     public class Mesh
     {
-        public string Name { get; set; }
+        public string DwgName { get; set; }
         public List<MyRebar> Rebars { get; set; } = new List<MyRebar>();
     }
     public class MyRebar
@@ -98,8 +98,10 @@ namespace MeshWelderAutocad
                         }
                         tr.Commit();
                     }
+                    var path = Path.Combine(dwgDirectory, $"{mesh.DwgName}.dwg");
+                    newDoc.Database.SaveAs(path, true, DwgVersion.Current, null);
+                    //newDoc.CloseAndDiscard();
                 }
-                //newDoc.CloseAndSave(Path.Combine(dwgDirectory, $"{mesh.Name}.dwg"));
             }
         }
 
