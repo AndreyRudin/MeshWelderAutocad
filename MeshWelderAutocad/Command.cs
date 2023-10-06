@@ -39,6 +39,11 @@ namespace MeshWelderAutocad
         public void TestCom()
         {
             //Панель создать Ribbon
+            //+?дубли линий не добавлять в json, проверить что нет дублирования
+            //Сделать метод для получения пути к шаблону в зависимости от версии автокада, может встроить шаблоны как ресурсы решения??
+            //Написать проверку, возможно ли вообще десериализровать json таким образом, если нет, то сообщение и остановка плагина
+            //Закрыть все чертежи автокада
+            //Вызов команды даже если нету открытого чертежа
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
             openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
@@ -58,15 +63,13 @@ namespace MeshWelderAutocad
             Directory.CreateDirectory(dwgDirectory);
 
             string jsonContent = File.ReadAllText(jsonFilePath);
-            //Написать проверку, возможно ли вообще десериализровать json таким образом
             List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
 
 
-            Document doc = Application.DocumentManager.MdiActiveDocument;
+            //Document doc = Application.DocumentManager.MdiActiveDocument;
             //Database db = doc.Database;
             foreach (var mesh in meshs)
             {
-                //Сделать метод для получения пути к шаблону в зависимости от версии автокада, может встроить шаблоны как ресурсы решения??
                 Document newDoc = Application.DocumentManager.Add(@"C:\Users\Acer\AppData\Local\Autodesk\AutoCAD 2022\R24.1\rus\Template\acad.dwt");
                 Application.DocumentManager.MdiActiveDocument = newDoc;
                 Database db = newDoc.Database;
@@ -116,9 +119,9 @@ namespace MeshWelderAutocad
                 case 10.0:
                     return Color.FromRgb(0, 255, 0);
                 case 12.0:
-                    return Color.FromRgb(0, 191, 255);
+                    return Color.FromRgb(0, 255, 255);
                 default:
-                    return Color.FromRgb(255, 165, 0);
+                    return Color.FromRgb(128, 128, 128);
             }
         }
 
