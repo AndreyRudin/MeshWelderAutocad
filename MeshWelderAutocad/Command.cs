@@ -15,8 +15,11 @@ using System.Net;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 using static Autodesk.AutoCAD.LayerManager.LayerFilter;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
+using Line = Autodesk.AutoCAD.DatabaseServices.Line;
+using Path = System.IO.Path;
 
 namespace MeshWelderAutocad
 {
@@ -39,11 +42,11 @@ namespace MeshWelderAutocad
         public void TestCom()
         {
             //Панель создать Ribbon
-            //+?дубли линий не добавлять в json, проверить что нет дублирования
+            //+?проверить что нет дублирования в каких панелях?
             //Сделать метод для получения пути к шаблону в зависимости от версии автокада, может встроить шаблоны как ресурсы решения??
             //Написать проверку, возможно ли вообще десериализровать json таким образом, если нет, то сообщение и остановка плагина
-            //Закрыть все чертежи автокада
-            //Вызов команды даже если нету открытого чертежа
+            //Закрыть все чертежи автокада -пока фаталит на этой операции
+            //Вызов команды доступен даже если нету открытого чертежа
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
             openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
@@ -65,16 +68,17 @@ namespace MeshWelderAutocad
             string jsonContent = File.ReadAllText(jsonFilePath);
             List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
 
+            string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
+            string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
 
-            //Document doc = Application.DocumentManager.MdiActiveDocument;
-            //Database db = doc.Database;
             foreach (var mesh in meshs)
             {
-                Document newDoc = Application.DocumentManager.Add(@"C:\Users\Acer\AppData\Local\Autodesk\AutoCAD 2022\R24.1\rus\Template\acad.dwt");
-                Application.DocumentManager.MdiActiveDocument = newDoc;
+                Document newDoc = Application.DocumentManager.Add(templatePath);
                 Database db = newDoc.Database;
 
-                using (DocumentLock docLock = newDoc.LockDocument(DocumentLockMode.ProtectedAutoWrite, null, null, true))
+                var path = Path.Combine(dwgDirectory, $"{mesh.DwgName}.dwg");
+
+                using (DocumentLock docLock = newDoc.LockDocument())
                 {
                     CreateLayer(db, "MESH");
                     using (Transaction tr = db.TransactionManager.StartTransaction())
@@ -101,10 +105,9 @@ namespace MeshWelderAutocad
                         }
                         tr.Commit();
                     }
-                    var path = Path.Combine(dwgDirectory, $"{mesh.DwgName}.dwg");
                     newDoc.Database.SaveAs(path, true, DwgVersion.Current, null);
-                    //newDoc.CloseAndDiscard();
                 }
+                newDoc.CloseAndSave(path);
             }
         }
 
