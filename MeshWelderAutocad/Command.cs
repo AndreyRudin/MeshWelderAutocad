@@ -82,7 +82,7 @@ namespace MeshWelderAutocad
 
             foreach (var mesh in meshs)
             {
-                Document newDoc = Application.DocumentManager.Add(templatePath);
+                Document newDoc = acadApp.DocumentManager.Add(templatePath);
                 Database db = newDoc.Database;
 
                 var path = Path.Combine(dwgDirectory, $"{mesh.DwgName}.dwg");
