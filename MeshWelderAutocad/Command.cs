@@ -15,6 +15,7 @@ using System.Net;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Shapes;
 using static Autodesk.AutoCAD.LayerManager.LayerFilter;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
@@ -42,6 +43,7 @@ namespace MeshWelderAutocad
         public void TestCom()
         {
             //Панель создать Ribbon
+            //внедрить отправку данных о запуск
             //+?проверить что нет дублирования в каких панелях?
             //Написать проверку, возможно ли вообще десериализровать json таким образом, если нет, то сообщение и остановка плагина
             //Вызов команды доступен даже если нету открытого чертежа
@@ -64,7 +66,16 @@ namespace MeshWelderAutocad
             Directory.CreateDirectory(dwgDirectory);
 
             string jsonContent = File.ReadAllText(jsonFilePath);
-            List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
+            List<Mesh> meshs;
+            try
+            {
+                meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
+            }
+            catch
+            {
+                MessageBox.Show("Некорректный JSON. Обратитесь к разработчику");
+                return;
+            }
 
             string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
             string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
