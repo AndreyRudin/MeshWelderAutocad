@@ -10,48 +10,23 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Shapes;
-using static Autodesk.AutoCAD.LayerManager.LayerFilter;
-using static System.Net.Mime.MediaTypeNames;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 using Line = Autodesk.AutoCAD.DatabaseServices.Line;
 using Path = System.IO.Path;
 
 namespace MeshWelderAutocad
 {
-    public class Mesh
-    {
-        public string DwgName { get; set; }
-        public string View { get; set; }
-        public string Rigth { get; set; }
-        public string Normal { get; set; }
-        public string Up { get; set; }
-        public List<MyRebar> Rebars { get; set; } = new List<MyRebar>();
-    }
-    public class MyRebar
-    {
-        public double StartX { get; set; }
-        public double StartY { get; set; }
-        public double EndX { get; set; }
-        public double EndY { get; set; }
-        public double Diameter { get; set; }
-    }
     public class Command : IExtensionApplication
     {
         [CommandMethod("TestCom")]
         public void TestCom()
         {
+            //внедрить отправку данных о запуск - файл отправлять на почту например или просто
+            //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
+
             //Панель создать Ribbon
-            //внедрить отправку данных о запуск - файл отправлять на почту например или просто на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
-            //+?проверить что нет дублирования в каких панелях?
-            //Написать проверку, возможно ли вообще десериализровать json таким образом, если нет, то сообщение и остановка плагина
-            //Вызов команды доступен даже если нету открытого чертежа
+            //Вызов команды из вкладки доступен даже если нету открытого чертежа
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
             openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
@@ -71,12 +46,8 @@ namespace MeshWelderAutocad
             Directory.CreateDirectory(dwgDirectory);
 
             string jsonContent = File.ReadAllText(jsonFilePath);
-            List<Mesh> meshs;
-            try
-            {
-                meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
-            }
-            catch
+            List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
+            if (meshs == null)
             {
                 MessageBox.Show("Некорректный JSON. Требуется выбрать корректный файл");
                 return;
@@ -101,56 +72,11 @@ namespace MeshWelderAutocad
                         BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
                         LayerTable layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForWrite);
 
-                        //int heigth = -200;
-                        //int x = -200;
-                        //var text = new MText();
-                        //text.Contents = "View: " + mesh.View;
-                        //text.Location = new Point3d(x, heigth, 0);
-                        //text.LayerId = layerTable["MESH"];
-                        //text.TextHeight = 150;
-                        //modelSpace.AppendEntity(text);
-                        //tr.AddNewlyCreatedDBObject(text, true);
-                        //heigth -= 200;
-
-                        //var text2 = new MText();
-                        //text2.Contents = "Rigth: " + mesh.Rigth;
-                        //text2.Location = new Point3d(x, heigth, 0);
-                        //text2.LayerId = layerTable["MESH"];
-                        //text2.TextHeight = 150;
-                        //modelSpace.AppendEntity(text2);
-                        //tr.AddNewlyCreatedDBObject(text2, true);
-                        //heigth -= 200;
-
-                        //var text3 = new MText();
-                        //text3.Contents = "Up: " + mesh.Up;
-                        //text3.Location = new Point3d(x, heigth, 0);
-                        //text3.LayerId = layerTable["MESH"];
-                        //text3.TextHeight = 150;
-                        //modelSpace.AppendEntity(text3);
-                        //tr.AddNewlyCreatedDBObject(text3, true);
-                        //heigth -= 200;
-
-                        //var text5 = new MText();
-                        //text5.Contents = "Normal: " + mesh.Normal;
-                        //text5.Location = new Point3d(x, heigth, 0);
-                        //text5.LayerId = layerTable["MESH"];
-                        //text5.TextHeight = 150;
-                        //modelSpace.AppendEntity(text5);
-                        //tr.AddNewlyCreatedDBObject(text5, true);
-                        //heigth -= 200;
-
-                        //var text6 = new MText();
-                        //text6.Contents = "Name view: " + mesh.DwgName;
-                        //text6.Location = new Point3d(x, heigth, 0);
-                        //text6.LayerId = layerTable["MESH"];
-                        //text6.TextHeight = 150;
-                        //modelSpace.AppendEntity(text6);
-                        //tr.AddNewlyCreatedDBObject(text6, true);
-                        //heigth -= 200;
-
                         foreach (var rebar in mesh.Rebars)
                         {
-                            Line line = new Line(new Point3d(rebar.StartX, rebar.StartY, 0), new Point3d(rebar.EndX, rebar.EndY, 0));
+                            Line line = new Line(
+                                new Point3d(rebar.StartPoint.X, rebar.StartPoint.Y, 0), 
+                                new Point3d(rebar.EndPoint.X, rebar.EndPoint.Y, 0));
                             line.Color = GetColor(rebar.Diameter);
                             ObjectId layerId = layerTable["MESH"];
                             line.LayerId = layerId;
