@@ -1,11 +1,8 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.GraphicsSystem;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.Windows;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -19,8 +16,8 @@ namespace MeshWelderAutocad
 {
     public class Command : IExtensionApplication
     {
-        [CommandMethod("TestCom")]
-        public void TestCom()
+        [CommandMethod("CreateMesh")]
+        public void CreateMesh()
         {
             //внедрить отправку данных о запуск - файл отправлять на почту например или просто
             //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
@@ -38,13 +35,8 @@ namespace MeshWelderAutocad
             if (result != System.Windows.Forms.DialogResult.OK)
                 return;
 
-            string jsonFilePath = openFileDialog.FileName;
-            string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
-            string jsonFileName = Path.GetFileNameWithoutExtension(jsonFilePath);
-            string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string dwgDirectory = Path.Combine(jsonDirectory, $"DWG-{timeStamp}_JSON-{jsonFileName}");
-            Directory.CreateDirectory(dwgDirectory);
 
+            string jsonFilePath = openFileDialog.FileName;
             string jsonContent = File.ReadAllText(jsonFilePath);
             List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
             if (meshs == null)
@@ -52,6 +44,11 @@ namespace MeshWelderAutocad
                 MessageBox.Show("Некорректный JSON. Требуется выбрать корректный файл");
                 return;
             }
+
+            string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
+            string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
+            string generalDwgDirectory = Path.Combine(jsonDirectory, $"{meshs[0].RevitModelName}_DWG-{timeStamp}");
+            Directory.CreateDirectory(generalDwgDirectory);
 
             string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
             string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
@@ -61,7 +58,8 @@ namespace MeshWelderAutocad
                 Document newDoc = acadApp.DocumentManager.Add(templatePath);
                 Database db = newDoc.Database;
 
-                var path = Path.Combine(dwgDirectory, $"{mesh.DwgName}.dwg");
+                var directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
+                var path = Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf");
 
                 using (DocumentLock docLock = newDoc.LockDocument())
                 {
@@ -84,16 +82,20 @@ namespace MeshWelderAutocad
                             tr.AddNewlyCreatedDBObject(line, true);
                         }
 
-                        LayerTableRecord layerNull = (LayerTableRecord)tr.GetObject(layerTable["0"], OpenMode.ForWrite);
-                        layerNull.IsOff = true;
-                        layerNull.IsLocked = true;
-                        layerNull.IsFrozen = true;
+                        ObjectId layerIdActive = layerTable["MESH"];
+                        db.Clayer = layerIdActive;
+ 
                         tr.Commit();
                     }
-                    newDoc.Database.SaveAs(path, true, DwgVersion.Current, null);
+
+                    if (!Directory.Exists(directoryDwgForPanel))
+                        Directory.CreateDirectory(directoryDwgForPanel);
+
+                    newDoc.Database.DxfOut(path, 12, DwgVersion.Current);
                 }
-                newDoc.CloseAndSave(path);
+                newDoc.CloseAndDiscard();
             }
+            //File.Delete(jsonFilePath);
         }
 
         private Color GetColor(double diameter)

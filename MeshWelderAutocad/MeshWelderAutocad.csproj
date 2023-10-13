@@ -91,13 +91,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
-    <Compile Include="Point.cs" />
-    <Compile Include="MyRebar.cs" />
-    <Compile Include="Mesh.cs" />
+    <Compile Include="lsp\Info.cs" />
+    <Compile Include="Dtos\Point.cs" />
+    <Compile Include="Dtos\MyRebar.cs" />
+    <Compile Include="Dtos\Mesh.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="lsp\acad.lsp" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
