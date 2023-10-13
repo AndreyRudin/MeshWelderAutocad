@@ -1,23 +1,32 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
+using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using Newtonsoft.Json;
+using Autodesk.Windows;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Json;
+using System.Text;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 using Line = Autodesk.AutoCAD.DatabaseServices.Line;
 using Path = System.IO.Path;
+using RibbonButton = Autodesk.Windows.RibbonButton;
+using RibbonPanelSource = Autodesk.Windows.RibbonPanelSource;
 
 namespace MeshWelderAutocad
 {
-    public class Command : IExtensionApplication
+    public class App : IExtensionApplication
     {
+        public const string RibbonTitle = "DNS_Plugins";
+        public const string RibbonId = "DNSPluginsId";
+
         [CommandMethod("CreateMesh")]
-        public void CreateMesh()
+        public static void CreateMesh()
         {
             //внедрить отправку данных о запуск - файл отправлять на почту например или просто
             //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
@@ -38,7 +47,15 @@ namespace MeshWelderAutocad
 
             string jsonFilePath = openFileDialog.FileName;
             string jsonContent = File.ReadAllText(jsonFilePath);
-            List<Mesh> meshs = JsonConvert.DeserializeObject<List<Mesh>>(jsonContent);
+
+            DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(List<Mesh>));
+            List<Mesh> meshs;
+            using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonContent)))
+            {
+                object objResponse = jsonSerializer.ReadObject(stream);
+                meshs = objResponse as List<Mesh>;
+            }
+
             if (meshs == null)
             {
                 MessageBox.Show("Некорректный JSON. Требуется выбрать корректный файл");
@@ -73,7 +90,7 @@ namespace MeshWelderAutocad
                         foreach (var rebar in mesh.Rebars)
                         {
                             Line line = new Line(
-                                new Point3d(rebar.StartPoint.X, rebar.StartPoint.Y, 0), 
+                                new Point3d(rebar.StartPoint.X, rebar.StartPoint.Y, 0),
                                 new Point3d(rebar.EndPoint.X, rebar.EndPoint.Y, 0));
                             line.Color = GetColor(rebar.Diameter);
                             ObjectId layerId = layerTable["MESH"];
@@ -84,7 +101,7 @@ namespace MeshWelderAutocad
 
                         ObjectId layerIdActive = layerTable["MESH"];
                         db.Clayer = layerIdActive;
- 
+
                         tr.Commit();
                     }
 
@@ -95,10 +112,10 @@ namespace MeshWelderAutocad
                 }
                 newDoc.CloseAndDiscard();
             }
-            //File.Delete(jsonFilePath);
+            File.Delete(jsonFilePath);
         }
 
-        private Color GetColor(double diameter)
+        public static Color GetColor(double diameter)
         {
             switch (diameter)
             {
@@ -133,8 +150,84 @@ namespace MeshWelderAutocad
         }
         public void Initialize()
         {
+            CreateRibbon();
 
+
+            //MessageBox.Show("dfds");
+
+            //RibbonControl rc = ComponentManager.Ribbon;
+            //var rt = new RibbonTab();
+            //rt.Title = "DNS_Plugins";
+            //rt.Id = "ID_MESHWELDER";
+            //rc.Tabs.Add(rt);
+
+            //RibbonPanelSource rps = new RibbonPanelSource();
+            //rps.Title = "MeshWelder";
+            //RibbonPanel rp = new RibbonPanel();
+            //rp.Source = rps;
+            //rt.Panels.Add(rp);
+
+            //var rb = new RibbonButton();
+            //rb.Name = "Подготовка чертежей сеток\nдля сеткосварочной машины";
+            //rb.ShowText = true;
+            //rb.CommandHandler = new RelayCommand((_) => CreateMesh(), (_) => true);
+            //rb.Text = "Test Buttonasdad";
+            //rps.Items.Add(rb);
         }
+        private void CreateRibbon()
+        {
+            Autodesk.Windows.RibbonControl ribbon = ComponentManager.Ribbon;
+            if (ribbon != null)
+            {
+                RibbonTab rtab = ribbon.FindTab(RibbonId);
+                if (rtab != null)
+                {
+                    ribbon.Tabs.Remove(rtab);
+                }
+                
+                rtab = new RibbonTab();
+                rtab.Title = RibbonTitle;
+                rtab.Id = RibbonId;
+                ribbon.Tabs.Add(rtab);
+                AddContentToTab(rtab);
+                rtab.IsActive = true;
+            }
+        }
+        private void AddContentToTab(RibbonTab rtab)
+        {
+            rtab.Panels.Add(AddPanelOne());
+        }
+        private static RibbonPanel AddPanelOne()
+        {
+            var rps = new RibbonPanelSource();
+            rps.Title = "MeshWelder";
+            RibbonPanel rp = new RibbonPanel();
+            rp.Source = rps;
+            RibbonButton rci = new RibbonButton();
+            rci.Name = "Подготовка чертежей сеток\nдля сеткосварочной машины";
+            rps.DialogLauncher = rci;
+
+            var addinAssembly = typeof(App).Assembly;
+            RibbonButton btnPythonShell = new RibbonButton
+            {
+                Orientation = (System.Windows.Controls.Orientation)Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Name = "Addin Manager Manual",
+                ShowText = true,
+                Text = "Addin Manager \n Manual",
+                Description = "Start Write Addin Manager Manual",
+                CommandHandler = new RelayCommand((_) => CreateMesh(), (_) => true)
+            };
+            rps.Items.Add(btnPythonShell);
+            return rp;
+        }
+        //public static ImageSource GetEmbeddedPng(System.Reflection.Assembly app, string imageName)
+        //{
+        //    var file = app.GetManifestResourceStream(imageName);
+        //    var source = PngBitmapDecoder.Create(file, BitmapCreateOptions.None, BitmapCacheOption.None);
+        //    return source.Frames[0];
+        //}
 
         public void Terminate()
         {
