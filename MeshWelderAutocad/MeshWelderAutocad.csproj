@@ -107,6 +107,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Installer.iss" />
     <Content Include="ForInstaller\PackageContents.xml" />
     <None Include="Resources\dev32x32.png" />
     <None Include="Resources\dev16x16.png" />
