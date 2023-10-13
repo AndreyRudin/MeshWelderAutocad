@@ -107,8 +107,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ForInstaller\MeshWelder.bundle\Content\MeshWelderAutocad.dll" />
+    <Content Include="ForInstaller\MeshWelder.bundle\PackageContents.xml" />
     <Content Include="Installer.iss" />
-    <Content Include="ForInstaller\PackageContents.xml" />
     <None Include="Resources\dev32x32.png" />
     <None Include="Resources\dev16x16.png" />
   </ItemGroup>
@@ -118,9 +119,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ForInstaller\Content\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>XCOPY /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\MeshWelder.bundle\Content\"
