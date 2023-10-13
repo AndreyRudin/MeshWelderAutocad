@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ApplicationPackage SchemaVersion="1.0"
+                    AutodeskProduct="MeshWelder"
+                    ProductType="Application"
+                    Name="MeshWelder">
+  <Components>
+    <ComponentEntry AppName="MeshWelder"
+                    Version="1.0"
+                    ModuleName="./Content/MeshWelderAutocad.dll"
+                    AppDescription="Execute Assembly"
+                    LoadOnAutoCADStartup="True"
+                    LoadOnCommandInvocation="True" 
+                    LoadOnRequest="True">
+      <Commands>
+        <Command Local="CreateMesh" Global="CreateMesh"/>
+      </Commands>
+    </ComponentEntry>
+    <RuntimeRequirements Platform="AutoCAD*" SeriesMin="R11.0" SeriesMax="R25.0"/>
+  </Components>
+</ApplicationPackage>
