@@ -30,7 +30,6 @@ namespace MeshWelderAutocad
             //внедрить отправку данных о запуск - файл отправлять на почту например или просто
             //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
 
-            //Панель создать Ribbon
             //Вызов команды из вкладки доступен даже если нету открытого чертежа
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
@@ -106,8 +105,10 @@ namespace MeshWelderAutocad
 
                     if (!Directory.Exists(directoryDwgForPanel))
                         Directory.CreateDirectory(directoryDwgForPanel);
+                    
+                    newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
 
-                    newDoc.Database.DxfOut(path, 12, DwgVersion.Current);
+
                 }
                 newDoc.CloseAndDiscard();
             }
