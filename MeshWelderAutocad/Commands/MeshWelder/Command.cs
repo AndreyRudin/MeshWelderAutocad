@@ -1,26 +1,21 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
-using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.Windows;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 using Line = Autodesk.AutoCAD.DatabaseServices.Line;
 using Path = System.IO.Path;
-using RibbonButton = Autodesk.Windows.RibbonButton;
-using RibbonPanelSource = Autodesk.Windows.RibbonPanelSource;
 
-namespace MeshWelderAutocad
+namespace MeshWelderAutocad.Commands.MeshWelder
 {
-    public class App : IExtensionApplication
+    internal class Command
     {
         [CommandMethod("CreateMesh")]
         public static void CreateMesh()
@@ -103,7 +98,7 @@ namespace MeshWelderAutocad
 
                     if (!Directory.Exists(directoryDwgForPanel))
                         Directory.CreateDirectory(directoryDwgForPanel);
-                    
+
                     newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
 
 
@@ -145,14 +140,6 @@ namespace MeshWelderAutocad
                 tr.Commit();
                 tr.Dispose();
             }
-        }
-        public void Initialize()
-        {
-            
-        }
-        public void Terminate()
-        {
-
         }
     }
 }

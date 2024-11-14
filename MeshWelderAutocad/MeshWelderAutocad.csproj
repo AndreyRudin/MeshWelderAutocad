@@ -88,11 +88,14 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Laser\Command.cs" />
+    <Compile Include="Commands\Laser\Dtos\Data.cs" />
+    <Compile Include="Commands\MeshWelder\Command.cs" />
     <Compile Include="InitCommand.cs" />
     <Compile Include="lsp\Info.cs" />
-    <Compile Include="Dtos\Point.cs" />
-    <Compile Include="Dtos\MyRebar.cs" />
-    <Compile Include="Dtos\Mesh.cs" />
+    <Compile Include="Commands\MeshWelder\Dtos\Point.cs" />
+    <Compile Include="Commands\MeshWelder\Dtos\MyRebar.cs" />
+    <Compile Include="Commands\MeshWelder\Dtos\Mesh.cs" />
     <Compile Include="App.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -101,6 +104,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="RelayCommand.cs" />
+    <Compile Include="Utils\CustomException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lsp\acad.lsp" />

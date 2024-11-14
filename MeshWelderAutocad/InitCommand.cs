@@ -27,7 +27,7 @@ namespace MeshWelderAutocad
         }
         private void CreateRibbon()
         {
-            Autodesk.Windows.RibbonControl ribbon = ComponentManager.Ribbon;
+            RibbonControl ribbon = ComponentManager.Ribbon;
             if (ribbon != null)
             {
                 RibbonTab rtab = ribbon.FindTab(RibbonId);
@@ -56,7 +56,7 @@ namespace MeshWelderAutocad
             rp.Source = rps;
 
             var addinAssembly = typeof(App).Assembly;
-            RibbonButton btnPythonShell = new RibbonButton
+            RibbonButton btnMeshWelder = new RibbonButton
             {
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
@@ -70,10 +70,23 @@ namespace MeshWelderAutocad
                     "\n\n2. Если армирование выполнялось в AutoCAD, то на этапе разработки КЖ.И стержни должны выполняться категорией \"полилинии\", иметь замкнутый контур, углы между отрезками контура 90°, строиться на слое \"MESH\" (без кавычек), а также иметь цвета, соответствующие их диаметру. Находясь в окне AutoCAD, указать папку, из которой будут обрабатываться файлы формата DWG, а также папку, куда будут сохранены результаты преобразования. Обработка - пакетная. В каждом файле проводится проверка полилиний. Если элементы категории \"полилиния\" имеют замкнутый контур, то внутри него строится продольная средняя линия категорией \"отрезок\", а полилиния удаляется. Если элементы категории \"полилиния\" не имеют замкнутого контура, то они преобразуются в элементы категории \"отрезок\". В каждом файле у сетки определяется габарит, нижний левый угол которого переносится в абсолютные координаты 0.0. Если в файле есть слои, кроме \"MESH\", то они удаляются, а неудаляемые - скрываются, замораживаются и блокируются.",
                 Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
                 LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
-                CommandHandler = new RelayCommand((_) => App.CreateMesh(), (_) => true)
+                CommandHandler = new RelayCommand((_) => Commands.MeshWelder.Command.CreateMesh(), (_) => true)
+            };
+            RibbonButton btnLaser = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Лазер",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
             };
 
-            rps.Items.Add(btnPythonShell);
+            rps.Items.Add(btnMeshWelder);
+            rps.Items.Add(btnLaser);
             return rp;
         }
         private static ImageSource GetImageSourceByBitMapFromResource(Bitmap source)

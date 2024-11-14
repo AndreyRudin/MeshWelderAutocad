@@ -22,7 +22,7 @@ DisableDirPage=yes
 ;DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 PrivilegesRequired=lowest
-OutputDir=C:\Users\Acer\Desktop\MeshWelderAutocad\MeshWelderAutocad
+OutputDir=C:\Users\Acer\Desktop\Work\Projects\01_Revit\03_DNS\06_MW\MeshWelderAutocad\MeshWelderAutocad
 OutputBaseFilename=MeshWelderAutocad_2023-10-27
 Compression=lzma
 SolidCompression=yes
@@ -33,7 +33,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Files]
-Source: "C:\Users\Acer\Desktop\MeshWelderAutocad\MeshWelderAutocad\ForInstaller\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\Acer\Desktop\Work\Projects\01_Revit\03_DNS\06_MW\MeshWelderAutocad\MeshWelderAutocad\ForInstaller\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
