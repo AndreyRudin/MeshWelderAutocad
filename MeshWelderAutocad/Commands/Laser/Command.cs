@@ -14,9 +14,9 @@ using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace MeshWelderAutocad.Commands.Laser
 {
-    //TODO Где полилинии, а где отрезками делаем?
     //TODO габариты панели и проемов и расстояния, положения деталей с ревитом на всех 4 поворотах проверить
     //TODO найти панель где все типы закладух будует 5,6,7,9 и проверить как отрисовывается
+    //TODO отрисовать наклонные связи с учётом поворота
     internal class Command
     {
         private static Dtos.Panel _panel;
@@ -113,6 +113,22 @@ namespace MeshWelderAutocad.Commands.Laser
                 //TODO диагональные связи обработать
                 CreateLine(connection.X - 50, connection.Y, connection.X + 50, connection.Y, layerId);
                 CreateLine(connection.X, connection.Y - 50, connection.X, connection.Y + 50, layerId);
+                if (connection.Angle == 0) 
+                {
+
+                }
+                else if (connection.Angle == 90)
+                {
+
+                }
+                else if (connection.Angle == 180)
+                {
+
+                }
+                else if (connection.Angle == 270)
+                {
+
+                }
             }
             else
             {

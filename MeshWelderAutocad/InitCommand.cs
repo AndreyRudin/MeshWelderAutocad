@@ -84,9 +84,22 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
                 CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
             };
+            RibbonButton btnTest = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Тест",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                CommandHandler = new RelayCommand((_) => Commands.Test.Command.Test(), (_) => true)
+            };
 
             rps.Items.Add(btnMeshWelder);
             rps.Items.Add(btnLaser);
+            rps.Items.Add(btnTest);
             return rp;
         }
         private static ImageSource GetImageSourceByBitMapFromResource(Bitmap source)

@@ -91,6 +91,9 @@
     <Compile Include="Commands\Laser\Command.cs" />
     <Compile Include="Commands\Laser\Dtos\Data.cs" />
     <Compile Include="Commands\MeshWelder\Command.cs" />
+    <Compile Include="Commands\Test\Command.cs" />
+    <Compile Include="Commands\Test\Point.cs" />
+    <Compile Include="Commands\Test\XDataJson.cs" />
     <Compile Include="InitCommand.cs" />
     <Compile Include="lsp\Info.cs" />
     <Compile Include="Commands\MeshWelder\Dtos\Point.cs" />
