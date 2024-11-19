@@ -14,9 +14,6 @@ using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace MeshWelderAutocad.Commands.Laser
 {
-    //TODO габариты панели и проемов и расстояния, положения деталей с ревитом на всех 4 поворотах проверить
-    //TODO найти панель где все типы закладух будует 5,6,7,9 и проверить как отрисовывается
-    //TODO отрисовать наклонные связи с учётом поворота
     internal class Command
     {
         private static Dtos.Panel _panel;
@@ -110,24 +107,23 @@ namespace MeshWelderAutocad.Commands.Laser
         {
             if (connection.IsDiagonal)
             {
-                //TODO диагональные связи обработать
-                CreateLine(connection.X - 50, connection.Y, connection.X + 50, connection.Y, layerId);
-                CreateLine(connection.X, connection.Y - 50, connection.X, connection.Y + 50, layerId);
-                if (connection.Angle == 0) 
+                CreateLine(connection.X - 50 / Math.Sqrt(2), connection.Y -50 / Math.Sqrt(2), connection.X + 50 / Math.Sqrt(2), connection.Y + 50 / Math.Sqrt(2), layerId);
+                CreateLine(connection.X - 50 / Math.Sqrt(2), connection.Y + 50 / Math.Sqrt(2), connection.X + 50 / Math.Sqrt(2), connection.Y - 50 / Math.Sqrt(2), layerId);
+                if (connection.Angle == 0)
                 {
-
+                    CreateLine(connection.X, connection.Y, connection.X, connection.Y + 100, layerId);
                 }
                 else if (connection.Angle == 90)
                 {
-
+                    CreateLine(connection.X, connection.Y, connection.X + 100, connection.Y, layerId);
                 }
                 else if (connection.Angle == 180)
                 {
-
+                    CreateLine(connection.X, connection.Y, connection.X, connection.Y - 100, layerId);
                 }
                 else if (connection.Angle == 270)
                 {
-
+                    CreateLine(connection.X, connection.Y, connection.X - 100, connection.Y, layerId);
                 }
             }
             else
@@ -211,6 +207,7 @@ namespace MeshWelderAutocad.Commands.Laser
                     double maxX = detail6.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(maxX, minY, maxX, maxY, layerId);
+                    CreateLine(minX , minY + 30, maxX, maxY - 30, layerId);
                 }
             }
             else if (_panel.EmbeddedParts9.Count != 0)
@@ -224,7 +221,7 @@ namespace MeshWelderAutocad.Commands.Laser
                     double minX = detail6.X - width / 2.0;
                     double maxX = detail6.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
-                    CreateLine(maxX, minY, maxX, maxY, layerId);
+                    CreateLine(minX, minY + 30, maxX, maxY - 30, layerId);
                 }
             }
         }
