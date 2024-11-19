@@ -131,8 +131,10 @@ namespace MeshWelderAutocad.Commands.Test
                         ObjectId planPolylineId = new ObjectId(new IntPtr(Convert.ToInt64(xDataObj.PlanPolylineId)));
                         Polyline planPolyline = tr.GetObject(planPolylineId, OpenMode.ForWrite) as Polyline;
 
+                        //Тут нужно переписать xData в полилинии на картинке, чтобы во второй и последующие разы смещение было правильным, сейчас первый раз норм отрабатывает, а вот второй и последующие косячит
+
                         ClippingRasterBoundary(planImage, planPolyline, verticalOffset, horizontalOffset);
-                        //planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(-horizontalOffset, -verticalOffset, 0)));
+                        planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(-horizontalOffset, -verticalOffset, 0)));
                         tr.Commit();
                     }
                 }
