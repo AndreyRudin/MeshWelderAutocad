@@ -19,10 +19,10 @@ namespace MeshWelderAutocad.Commands.Test
 {
     internal class Command
     {
-        private static string appName = "MyPluginXData";
+        private static string appName = "SlabMaster";
+        private static bool isObjectModifiedSubscribed = false; //можно сохранить это во внешний конфиг на самый крайний случай, потому что 
         private static Document doc;
         private static Editor ed;
-        private static Database db;
         [CommandMethod("Test")]
         public static void Test()
         {
@@ -30,46 +30,66 @@ namespace MeshWelderAutocad.Commands.Test
             {
                 doc = Application.DocumentManager.MdiActiveDocument;
                 ed = doc.Editor;
-                db = doc.Database;
+                ObjectId slabPolylineId;
                 using (DocumentLock docLock = doc.LockDocument())
                 {
                     using (Transaction tr = doc.TransactionManager.StartTransaction())
                     {
-                        ObjectId planPolylineId = SelectOriginalPolyLine();
+                        Polyline planPolyline = SelectPlanPolyLine();
+                        //planPolyline.Modified += OnPolylineModified;
+
                         Point3d pointInPlanPolyline = SelectPoint("Выберите базовую точку для копирования: ");
-                        ObjectId slabImageId = SelectOriginalImage();
+                        ObjectId slabImageId = SelectSlabImage();
+                        Point3d endPoint = SelectPoint("Укажите точку для вставки копии: ");
 
-                        Polyline planPolyline = tr.GetObject(planPolylineId, OpenMode.ForWrite) as Polyline;
-
-                        BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTable bt = tr.GetObject(doc.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
                         BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                        Point3d endPoint = SelectPoint("Укажите точку для вставки копии: ");
                         Vector3d displacement = endPoint - pointInPlanPolyline;
 
                         RasterImage slabImage = tr.GetObject(slabImageId, OpenMode.ForRead) as RasterImage;
-                        RasterImage planImage = slabImage.Clone() as RasterImage;
-                        planImage.TransformBy(Matrix3d.Displacement(-displacement));
-                        btr.AppendEntity(planImage);
-                        tr.AddNewlyCreatedDBObject(planImage, true);
+                        RasterImage planImage = CreatePlanImage(slabImage, displacement, tr, planPolyline, btr);
+                        Polyline slabPolyline = CreateSlabPolyline(planPolyline, displacement, planImage, slabImageId, tr, btr);
+                        slabPolylineId = slabPolyline.Id;
 
-                        Polyline slabPolyline = planPolyline.Clone() as Polyline;
-                        slabPolyline.TransformBy(Matrix3d.Displacement(displacement));
-                        btr.AppendEntity(slabPolyline);
-                        tr.AddNewlyCreatedDBObject(slabPolyline, true);
-                        AddXDataToEntity(slabPolyline, planPolyline.Id, planImage.Id, slabImage.Id);
-
-                        ClippingRasterBoundary(planImage, planPolyline);
+                        AddXDataToPlanPolyline(slabPolyline, planPolyline, planImage.Id, slabImageId);
+                        tr.Commit();
+                    }
+                    using (Transaction tr = doc.TransactionManager.StartTransaction())
+                    {
+                        Polyline polyline = tr.GetObject(slabPolylineId, OpenMode.ForWrite) as Polyline;
+                        polyline.Modified += OnPolylineModified;
                         tr.Commit();
                     }
                 }
-                db.ObjectModified += OnObjectModified;
             }
             catch (System.Exception e)
             {
                 MessageBox.Show(e.Message + e.StackTrace);
             }
         }
+        private static Polyline CreateSlabPolyline(Polyline planPolyline, Vector3d displacement, 
+            RasterImage planImage, ObjectId slabImageId, Transaction tr, BlockTableRecord btr)
+        {
+            Polyline slabPolyline = planPolyline.Clone() as Polyline;
+            slabPolyline.TransformBy(Matrix3d.Displacement(displacement));
+            btr.AppendEntity(slabPolyline);
+            tr.AddNewlyCreatedDBObject(slabPolyline, true);
+            AddXDataToSlabPolyline(slabPolyline, planPolyline, planImage.Id, slabImageId);
+            return slabPolyline;
+        }
+
+        private static RasterImage CreatePlanImage(RasterImage slabImage, Vector3d displacement, 
+            Transaction tr, Polyline planPolyline, BlockTableRecord btr)
+        {
+            RasterImage planImage = slabImage.Clone() as RasterImage;
+            planImage.TransformBy(Matrix3d.Displacement(-displacement));
+            btr.AppendEntity(planImage);
+            tr.AddNewlyCreatedDBObject(planImage, true);
+            ClippingRasterBoundary(planImage, planPolyline);
+            return planImage;
+        }
+
         private static void ClippingRasterBoundary(RasterImage image, Polyline polyline, double verticalOffset = 0, double horizontalOffset = 0)
         {
             Point2dCollection clipBoundary = new Point2dCollection();
@@ -87,81 +107,289 @@ namespace MeshWelderAutocad.Commands.Test
             image.SetClipBoundary(ClipBoundaryType.Poly, clipBoundary);
             image.IsClipped = true;
         }
-        private static void OnObjectModified(object sender, ObjectEventArgs e)
+        private static void OnPolylineModified(object sender, EventArgs e)
         {
-            if (e.DBObject is Polyline polyline)
+            if (sender is Polyline polyline)
             {
-                XDataJson xDataObj = null;
-                ResultBuffer xData = polyline.GetXDataForApplication(appName);
-                if (xData != null)
+                Database db = polyline.Database;
+                List<Polyline> polylinesWithXData = GetPolylinesWithData(db, appName);
+                List<PolylineXData> xDatas = polylinesWithXData.Select(pl => GetXData(pl)).ToList();
+                List<Polyline> planPolylines = GetPolylinesByIds(xDatas.Select(data => data.PlanPolylineId).Distinct(), db);
+                List<Polyline> slabPolylines = GetPolylinesByIds(xDatas.Select(data => data.SlabPolylineId).Distinct(), db);
+                List<RasterImage> slabImages = GetRasterImagesByIds(xDatas.Select(data => data.SlabPolylineId).Distinct(), db);
+                List<RasterImage> planImages = GetRasterImagesByIds(xDatas.Select(data => data.PlanPolylineId).Distinct(), db);
+            }
+            else
+            {
+
+            }
+        }
+        //private static void OnЩиоусеModified(object sender, EventArgs e)
+        //{
+        //    var modifiedProperties = .GetModifiedProperties();
+        //    if (modifiedProperties != null && modifiedProperties.Count > 0)
+        //    {
+        //        ed.WriteMessage($"\nObject {e.DBObject.Id} реально изменен.");
+        //    }
+        //    else
+        //    {
+        //        ed.WriteMessage($"\nObject {e.DBObject.Id} модифицировался без изменений данных.");
+        //    }
+
+       
+            
+        //    List<LinkElement> linkElements = new List<LinkElement>();
+        //    for (int i = 0; i < planPolylines.Count; i++)
+        //    {
+        //        linkElements.Add(new LinkElement(planImages[i], slabImages[i], 
+        //            planPolylines[i], slabPolylines[i]));
+        //    }
+        //    //RemoveUnusedObjects(linkElements, db);
+
+        //    //if (e.DBObject is Polyline polyline)
+        //    //{
+        //    //    PolylineXData currentSlabPolylineXData = GetXData(polyline);
+        //    //    List<Vertex> polylineVertexes = GetVertexes(polyline);
+        //    //    if (currentSlabPolylineXData != null)
+        //    //    {
+        //    //        //INFO была измене
+        //    //        return;
+        //    //    }
+
+        //        //&& IsSlabLineChangePosition(modifiedPolylineVertexes, currentSlabPolylineXData.SlabPolylineVertexes))
+        //        //{
+        //        //    if ()
+        //        //    {
+        //        //        MessageBox.Show("У полилинии были изменены количество вершин. " +
+        //        //            "Для правильной работы плагина требуется вернуть измененную полилинию к исходному состоянию.");
+        //        //    }
+        //        //    if ()
+        //        //    {
+        //        //        MessageBox.Show("У полилинии слэба были изменены количество вершин." +
+        //        //            " Для правильной работы плагина требуется вернуть измененную полилинию к исходному состоянию.");
+        //        //    }
+
+        //        //    double verticalOffset = GetVertexes(slabLine).First().Y - currentSlabPolylineXData.SlabPolylineVertexes.Y;
+        //        //    double horizontalOffset = GetVertexes(slabLine).First().X - currentSlabPolylineXData.SlabPolylineVertexes.X;
+        //        //    using (Transaction tr = e.DBObject.Database.TransactionManager.StartTransaction())
+        //        //    {
+        //        //        ObjectId planImageId = new ObjectId(new IntPtr(Convert.ToInt64(currentSlabPolylineXData.PlanImageId)));
+        //        //        RasterImage planImage = tr.GetObject(planImageId, OpenMode.ForWrite) as RasterImage;
+
+        //        //        ObjectId planPolylineId = new ObjectId(new IntPtr(Convert.ToInt64(currentSlabPolylineXData.PlanPolylineId)));
+        //        //        Polyline planPolyline = tr.GetObject(planPolylineId, OpenMode.ForWrite) as Polyline;
+
+        //        //        UpdateXDataToSlabPolyline(currentSlabPolylineXData);
+
+        //        //        ClippingRasterBoundary(planImage, planPolyline, verticalOffset, horizontalOffset);
+        //        //        planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(-horizontalOffset, -verticalOffset, 0)));
+        //        //        tr.Commit();
+        //        //    }
+        //        //}
+        //        //else
+        //        //{
+        //        //    //Получить все полилинии
+        //        //    //если была отредактирована линия, которая у другой полилинии сохранена как связанная, то нужно удалить связанную полилинию и связанную картинку с плана
+        //        //}
+        //    //}
+        //    //else if (e.DBObject is RasterImage image)
+        //    //{
+        //    //    //Получить все полилинии
+        //    //    //если была удалена картинка слеба, которая была связанная у какой-то линии на слебе, то удалить все связанные объекты
+        //    //    //если была была удалена картинка на плане, то удалить все связанные линии, но картинку слеба не трогать
+        //    //}
+        //    //ВЕЗДЕ НЕ ЗАБЫТЬ ПОМЕНЯТЬ XDATA на новую, если стараю не актуальная
+        //}
+
+        private static void RemoveUnusedObjects(List<LinkElement> linkElements, Database db)
+        {
+            foreach (LinkElement linkElement in linkElements)
+            {
+                if (linkElement.SlabPolyline == null 
+                    || linkElement.PlanPolyline == null 
+                    || linkElement.PlanImage == null
+                    || linkElement.SlabPolyline == null)
                 {
-                    foreach (TypedValue value in xData)
+                    if (linkElement.PlanImage != null && !linkElement.PlanImage.IsErased)
                     {
-                        if (value.TypeCode == (short)DxfCode.ExtendedDataAsciiString)
+                        linkElement.PlanImage.UpgradeOpen();
+                        linkElement.PlanImage.Erase();      
+                    }
+
+                    if (linkElement.SlabImage != null && !linkElement.SlabImage.IsErased)
+                    {
+                        linkElement.SlabImage.UpgradeOpen();
+                        linkElement.SlabImage.Erase();
+                    }
+
+                    if (linkElement.PlanPolyline != null && !linkElement.PlanPolyline.IsErased)
+                    {
+                        linkElement.PlanPolyline.UpgradeOpen();
+                        linkElement.PlanPolyline.Erase();
+                    }
+
+                    if (linkElement.SlabPolyline != null && !linkElement.SlabPolyline.IsErased)
+                    {
+                        linkElement.SlabPolyline.UpgradeOpen();
+                        linkElement.SlabPolyline.Erase();
+                    }
+                }
+            }
+        }
+
+        private static List<RasterImage> GetRasterImagesByIds(IEnumerable<long> enumerable, Database db)
+        {
+            List<RasterImage> rasterImages = new List<RasterImage>();
+
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                foreach (long idValue in enumerable)
+                {
+                    ObjectId objId = new ObjectId(new IntPtr(idValue)); 
+
+                    if (objId.IsValid && !objId.IsNull)
+                    {
+                        DBObject dbObject = trans.GetObject(objId, OpenMode.ForRead, false);
+                        if (dbObject is RasterImage rasterImage)
                         {
-                            string jsonString = value.Value as string;
-                            if (!string.IsNullOrEmpty(jsonString))
+                            rasterImages.Add(rasterImage);
+                        }
+                        else
+                        {
+                            rasterImages.Add(null);
+                        }
+                    }
+                    else
+                    {
+                        rasterImages.Add(null);
+                    }
+                }
+                trans.Commit();
+            }
+
+            return rasterImages;
+        }
+
+        private static List<Polyline> GetPolylinesByIds(IEnumerable<long> ids, Database db)
+        {
+            List<Polyline> polylines = new List<Polyline>();
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                foreach (long idValue in ids)
+                {
+                    ObjectId id = new ObjectId(new IntPtr(idValue));
+
+                    if (id.IsValid && !id.IsErased)
+                    {
+                        DBObject obj = trans.GetObject(id, OpenMode.ForRead, false);
+
+                        if (obj is Polyline polyline)
+                        {
+                            polylines.Add(polyline);
+                        }
+                        else
+                        {
+                            polylines.Add(null);
+                        }
+                    }
+                    else
+                    {
+                        polylines.Add(null);
+                    }
+                }
+                trans.Commit();
+            }
+
+            return polylines;
+        }
+
+        private static List<Polyline> GetPolylinesWithData(Database db, string appName)
+        {
+            List<Polyline> polylinesWithXData = new List<Polyline>();
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
+
+                foreach (ObjectId objId in btr)
+                {
+                    DBObject obj = tr.GetObject(objId, OpenMode.ForRead);
+                    if (obj is Polyline polyline)
+                    {
+                        ResultBuffer xData = polyline.GetXDataForApplication(appName);
+                        if (xData != null)
+                        {
+                            polylinesWithXData.Add(polyline);
+                        }
+                    }
+                }
+
+                tr.Commit();
+            }
+            return polylinesWithXData;
+        }
+
+        private static void UpdateXDataToSlabPolyline(PolylineXData currentSlabPolylineXData)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static PolylineXData GetXData(Polyline polyline)
+        {
+            ResultBuffer xData = polyline.GetXDataForApplication(appName);
+            if (xData != null)
+            {
+                foreach (TypedValue value in xData)
+                {
+                    if (value.TypeCode == (short)DxfCode.ExtendedDataAsciiString)
+                    {
+                        string jsonString = value.Value as string;
+                        if (!string.IsNullOrEmpty(jsonString))
+                        {
+                            try
                             {
-                                try
+                                using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
                                 {
-                                    // Преобразуем JSON строку в поток
-                                    using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
-                                    {
-                                        DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(XDataJson));
-                                        xDataObj = (XDataJson)serializer.ReadObject(ms);
-                                    }
+                                    DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(PolylineXData));
+                                    return (PolylineXData)serializer.ReadObject(ms);
                                 }
-                                catch (System.Exception ex)
-                                {
-                                    throw new System.Exception($"Ошибка при разборе JSON: {ex.Message}");
-                                }
+                            }
+                            catch (System.Exception ex)
+                            {
+                                throw new System.Exception($"Ошибка при парсинге JSON. Обратитесь к разработчику.");
                             }
                         }
                     }
                 }
-                if (xDataObj != null && !IsPointEquals(GetVertexes(polyline).First(), xDataObj.FirstVertex))
-                {
-                    double verticalOffset = GetVertexes(polyline).First().Y - xDataObj.FirstVertex.Y;
-                    double horizontalOffset = GetVertexes(polyline).First().X - xDataObj.FirstVertex.X;
-                    using (Transaction tr = e.DBObject.Database.TransactionManager.StartTransaction())
-                    {
-                        ObjectId planImageId = new ObjectId(new IntPtr(Convert.ToInt64(xDataObj.PlanImageId)));
-                        RasterImage planImage = tr.GetObject(planImageId, OpenMode.ForWrite) as RasterImage;
-
-                        ObjectId planPolylineId = new ObjectId(new IntPtr(Convert.ToInt64(xDataObj.PlanPolylineId)));
-                        Polyline planPolyline = tr.GetObject(planPolylineId, OpenMode.ForWrite) as Polyline;
-
-                        //Тут нужно переписать xData в полилинии на картинке, чтобы во второй и последующие разы смещение было правильным, сейчас первый раз норм отрабатывает, а вот второй и последующие косячит
-
-                        ClippingRasterBoundary(planImage, planPolyline, verticalOffset, horizontalOffset);
-                        planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(-horizontalOffset, -verticalOffset, 0)));
-                        tr.Commit();
-                    }
-                }
-                else
-                {
-                    //Получить все полилинии
-                    //если была отредактирована линия, которая у другой полилинии сохранена как связанная, то нужно удалить связанную полилинию и связанную картинку с плана
-                }
             }
-            else if (e.DBObject is RasterImage image)
-            {
-                //Получить все полилинии
-                //если была удалена картинка слеба, которая была связанная у какой-то линии на слебе, то удалить все связанные объекты
-                //если была была удалена картинка на плане, то удалить все связанные линии, но картинку слеба не трогать
-            }
-            //ВЕЗДЕ НЕ ЗАБЫТЬ ПОМЕНЯТЬ XDATA на новую, если стараю не актуальная
+            return null;
         }
 
-        private static bool IsPointEquals(Point3d point1, Point point2)
+        private static bool IsSlabLineChangePosition(List<Vertex> points1, List<Vertex> points2)
         {
-            return Math.Round(point1.X, 8) == Math.Round(point2.X, 8)
-                && Math.Round(point1.Y, 8) == Math.Round(point2.Y, 8)
-                && Math.Round(point1.Z, 8) == Math.Round(point2.Z, 8);
+            if (points1.Count != points2.Count)
+            {
+                return false;
+            }
 
+            for (int i = 0; i < points1.Count; i++)
+            {
+                if (!ArePointsEqual(points1[i], points2[i]))
+                {
+                    return false;
+                }
+            }
+            return true; 
+        }
+        private static bool ArePointsEqual(Vertex p1, Vertex p2)
+        {
+            return Math.Round(p1.X, 8) == Math.Round(p2.X, 8) &&
+                   Math.Round(p1.Y, 8) == Math.Round(p2.Y, 8) &&
+                   Math.Round(p1.Z, 8) == Math.Round(p2.Z, 8);
         }
 
-        private static ObjectId SelectOriginalImage()
+        private static ObjectId SelectSlabImage()
         {
             PromptEntityOptions peoImg = new PromptEntityOptions("\nВыберите изображение под полилинией: ");
             peoImg.SetRejectMessage("\nВыбранный объект не является изображением.");
@@ -181,12 +409,12 @@ namespace MeshWelderAutocad.Commands.Test
             PromptPointResult ppr = ed.GetPoint(message);
             if (ppr.Status != PromptStatus.OK)
             {
-                throw new System.Exception("\nОтмена выбора точки.");
+                throw new System.Exception("\nПользователь отменил выбор");
             }
             return ppr.Value;
         }
 
-        private static ObjectId SelectOriginalPolyLine()
+        private static Polyline SelectPlanPolyLine()
         {
             PromptEntityOptions peo = new PromptEntityOptions("\nВыберите полилинию: ");
             peo.SetRejectMessage("\nВыбранный объект не является полилинией.");
@@ -195,63 +423,102 @@ namespace MeshWelderAutocad.Commands.Test
             PromptEntityResult per = ed.GetEntity(peo);
             if (per.Status != PromptStatus.OK)
             {
-                throw new System.Exception("\nОтмена или некорректный выбор.");
+                throw new System.Exception("Пользователь отменил выбор");
             }
-            return per.ObjectId;
+            using (Transaction tr = doc.Database.TransactionManager.StartTransaction())
+            {
+                Polyline pl = tr.GetObject(per.ObjectId, OpenMode.ForWrite) as Polyline;
+                if (pl != null && IsPolylineClosed(pl))
+                    return pl;
+                else
+                    throw new System.Exception("Выбранная полилиния не является замкнутой. " +
+                        "Требуется выбрать замкнутую линию.");
+            }
+        }
+        private static bool IsPolylineClosed(Polyline polyline)
+        {
+            if (polyline == null || polyline.NumberOfVertices < 2)
+                return false;
+
+            Point2d firstPoint = polyline.GetPoint2dAt(0);
+            Point2d lastPoint = polyline.GetPoint2dAt(polyline.NumberOfVertices - 1);
+
+            return firstPoint.IsEqualTo(lastPoint, Tolerance.Global);
         }
 
-        private static void AddXDataToEntity(Polyline polyline,
-            ObjectId planPolylineId,
+        private static void AddXDataToSlabPolyline(Polyline slabPolyline,
+            Polyline planPolyline,
             ObjectId planImageId,
             ObjectId slabImageId)
         {
-            Database db = polyline.Database;
+            ResultBuffer rb = CreateXData(slabPolyline, planPolyline, planImageId, slabImageId);
+            slabPolyline.XData = rb;
+        }
+        private static void AddXDataToPlanPolyline(Polyline slabPolyline, 
+            Polyline planPolyline, 
+            ObjectId planImageId, 
+            ObjectId slabImageId)
+        {
+            using (Transaction tr = planPolyline.Database.TransactionManager.StartTransaction())
+            {
+                Polyline planPolylineForWrite = tr.GetObject(planPolyline.ObjectId, OpenMode.ForWrite) as Polyline;
+                if (planPolylineForWrite != null)
+                {
+                    ResultBuffer rb = CreateXData(slabPolyline, planPolyline, planImageId, slabImageId);
+                    planPolyline.XData = rb;
+                }
+                tr.Commit();
+            }
+        }
 
-            RegAppTable regAppTable = (RegAppTable)db.RegAppTableId.GetObject(OpenMode.ForRead);
+        private static ResultBuffer CreateXData(Polyline slabPolyline, Polyline planPolyline, 
+            ObjectId planImageId, ObjectId slabImageId)
+        {
+            RegAppTable regAppTable = (RegAppTable)doc.Database.RegAppTableId.GetObject(OpenMode.ForRead);
             if (!regAppTable.Has(appName))
             {
                 regAppTable.UpgradeOpen();
                 RegAppTableRecord regAppRecord = new RegAppTableRecord { Name = appName };
                 regAppTable.Add(regAppRecord);
-                db.TransactionManager.TopTransaction.AddNewlyCreatedDBObject(regAppRecord, true);
+                doc.Database.TransactionManager.TopTransaction.AddNewlyCreatedDBObject(regAppRecord, true);
             }
-            Point3d point = GetVertexes(polyline).First();
-            var jsonXData = new XDataJson()
+            var jsonXData = new PolylineXData()
             {
-                PlanImageId = planImageId.ToString().Replace("(", "").Replace(")", ""),
-                PlanPolylineId = planPolylineId.ToString().Replace("(", "").Replace(")", ""),
-                SlabImageId = slabImageId.ToString().Replace("(", "").Replace(")", ""),
-                FirstVertex = new Point()
-                {
-                    X = point.X,
-                    Y = point.Y,
-                    Z = point.Z
-                }
+                PlanImageId = ParseObjectIdToString(planImageId),
+                PlanPolylineId = ParseObjectIdToString(planPolyline.Id),
+                SlabImageId = ParseObjectIdToString(slabImageId),
+                SlabPolylineId = ParseObjectIdToString(slabPolyline.Id),
+                SlabPolylineVertexes = GetVertexes(slabPolyline),
+                PlanPolylineVertexes = GetVertexes(planPolyline),
             };
 
             string json;
             using (MemoryStream ms = new MemoryStream())
             {
-                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(XDataJson));
+                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(PolylineXData));
                 serializer.WriteObject(ms, jsonXData);
-                json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                json = Encoding.UTF8.GetString(ms.ToArray());
             }
             ResultBuffer rb = new ResultBuffer(
                 new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName),
                 new TypedValue((int)DxfCode.ExtendedDataAsciiString, json)
             );
-
-            polyline.XData = rb;
+            return rb;
         }
 
-        private static List<Point3d> GetVertexes(Polyline polyline)
+        private static long ParseObjectIdToString(ObjectId objectId)
+        {
+            return Convert.ToInt64(objectId.ToString().Replace("(", "").Replace(")", ""));
+        }
+
+        private static List<Vertex> GetVertexes(Polyline polyline)
         {
             List<Point3d> points = new List<Point3d>();
             for (int i = 0; i < polyline.NumberOfVertices; i++)
             {
                 points.Add(polyline.GetPoint3dAt(i));
             }
-            return points;
+            return points.Select(pt => new Vertex(pt.X, pt.Y, pt.Z)).ToList();
         }
     }
 }

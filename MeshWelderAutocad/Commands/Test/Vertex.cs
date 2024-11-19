@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace MeshWelderAutocad.Commands.Test
 {
     [DataContract]
-    public class Point
+    public class Vertex
     {
         [DataMember]
         public double X { get; set; }
@@ -16,5 +16,11 @@ namespace MeshWelderAutocad.Commands.Test
         public double Y { get; set; }
         [DataMember]
         public double Z { get; set; }
+        public Vertex(double x, double y, double z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
     }
 }
