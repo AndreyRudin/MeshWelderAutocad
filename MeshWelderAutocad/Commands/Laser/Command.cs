@@ -207,7 +207,7 @@ namespace MeshWelderAutocad.Commands.Laser
                     double maxX = detail6.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(maxX, minY, maxX, maxY, layerId);
-                    CreateLine(minX , minY + 30, maxX, maxY - 30, layerId);
+                    //CreateLine(minX , minY + 30, maxX, maxY - 30, layerId);
                 }
             }
             else if (_panel.EmbeddedParts9.Count != 0)
@@ -221,7 +221,7 @@ namespace MeshWelderAutocad.Commands.Laser
                     double minX = detail6.X - width / 2.0;
                     double maxX = detail6.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
-                    CreateLine(minX, minY + 30, maxX, maxY - 30, layerId);
+                    //CreateLine(minX, minY + 30, maxX, maxY - 30, layerId);
                 }
             }
         }
