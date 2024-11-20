@@ -18,6 +18,7 @@ namespace MeshWelderAutocad.Commands.Test
     internal class Command
     {
         private static string appName = "SlabMaster";
+        private static List<ObjectId> _polylinesNeedToUpdateXData = new List<ObjectId>();
         private static Document doc;
         private static Editor ed;
         [CommandMethod("Test")]
@@ -25,10 +26,12 @@ namespace MeshWelderAutocad.Commands.Test
         {
             //ругается при выборе прямоугольников
             //подписка пропадает при закрытии автокада, нужно подписываться заново при открытии повторном
+            //Проблемы при слежение за всеми объектами сразу, транзакции одновременно открываются что ли?
             try
             {
                 doc = Application.DocumentManager.MdiActiveDocument;
                 ed = doc.Editor;
+                Database db = doc.Database;
                 ObjectId slabPolylineId;
                 ObjectId planPolylineId;
                 ObjectId slabImageId;
@@ -52,18 +55,56 @@ namespace MeshWelderAutocad.Commands.Test
                         RasterImage slabImage = tr.GetObject(slabImageId, OpenMode.ForRead) as RasterImage;
                         RasterImage planImage = CreatePlanImage(slabImage, displacement, tr, planPolyline, btr);
                         planImageId = planImage.Id;
-                        Polyline slabPolyline = CreateSlabPolyline(planPolyline, displacement, planImage, slabImageId, tr, btr);
+                        Polyline slabPolyline = CreateSlabPolyline(planPolyline, displacement, planImage, slabImageId, tr, btr, db);
                         slabPolylineId = slabPolyline.Id;
 
-                        AddXDataToPlanPolyline(slabPolyline, planPolyline, planImage.Id, slabImageId);
+                        AddXDataToPlanPolyline(slabPolyline, planPolyline, planImage.Id, slabImageId, db);
                         tr.Commit();
                     }
                     AddModifiedHandlers(slabPolylineId, planPolylineId, slabImageId, planImageId);
+                    Application.DocumentManager.MdiActiveDocument.CommandEnded += OnCommandEnded;
                 }
             }
             catch (System.Exception e)
             {
                 MessageBox.Show(e.Message + e.StackTrace);
+            }
+        }
+
+        private static void OnCommandEnded(object sender, CommandEventArgs e)
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+
+            List<ObjectId> slabPolylineIds = new List<ObjectId>();
+            if (_polylinesNeedToUpdateXData.Count > 0)
+            {
+                using (Transaction tr = db.TransactionManager.StartTransaction())
+                {
+                    foreach (var objId in _polylinesNeedToUpdateXData)
+                    {
+                        Polyline slabPolyline = tr.GetObject(objId, OpenMode.ForWrite) as Polyline;
+                        RemoveExistXData(slabPolyline);
+                        List<SetLinkedElement> sets = GetSetsLinkedElement(db);
+                        PolylineType polylineType = GetTypePolyline(slabPolyline, sets);
+                        SetLinkedElement matchSet = GetMatchSet(slabPolyline, polylineType, sets);
+                        Polyline planPolyline = GetPolylineById(db, matchSet.PlanPolylineId);
+                        AddXDataToSlabPolyline(slabPolyline, planPolyline, matchSet.PlanImageId, matchSet.SlabImageId, db);
+                        slabPolylineIds.Add(slabPolyline.Id);
+                    }
+                    tr.Commit();
+                }
+                using (Transaction tr = doc.TransactionManager.StartTransaction())
+                {
+                    foreach (var slabPolylineId in slabPolylineIds)
+                    {
+                        DBObject slabPolyline = tr.GetObject(slabPolylineId, OpenMode.ForWrite);
+                        slabPolyline.Modified += OnElementModified;
+                    }
+                    tr.Commit();
+                }
+
+                _polylinesNeedToUpdateXData.Clear();
             }
         }
 
@@ -73,24 +114,24 @@ namespace MeshWelderAutocad.Commands.Test
             {
                 DBObject slabPolyline = GetDBObjectById(slabPolylineId, tr);
                 slabPolyline.Modified += OnElementModified;
-                DBObject planPolyline = GetDBObjectById(planPolylineId, tr);
-                planPolyline.Modified += OnElementModified;
-                DBObject slabImage = GetDBObjectById(slabImageId, tr);
-                slabImage.Modified += OnElementModified;
-                DBObject planImage = GetDBObjectById(planImageId, tr);
-                planImage.Modified += OnElementModified;
+                //DBObject planPolyline = GetDBObjectById(planPolylineId, tr);
+                //planPolyline.Modified += OnElementModified;
+                //DBObject slabImage = GetDBObjectById(slabImageId, tr);
+                //slabImage.Modified += OnElementModified;
+                //DBObject planImage = GetDBObjectById(planImageId, tr);
+                //planImage.Modified += OnElementModified;
                 tr.Commit();
             }
         }
 
         private static Polyline CreateSlabPolyline(Polyline planPolyline, Vector3d displacement,
-            RasterImage planImage, ObjectId slabImageId, Transaction tr, BlockTableRecord btr)
+            RasterImage planImage, ObjectId slabImageId, Transaction tr, BlockTableRecord btr, Database db)
         {
             Polyline slabPolyline = planPolyline.Clone() as Polyline;
             slabPolyline.TransformBy(Matrix3d.Displacement(displacement));
             btr.AppendEntity(slabPolyline);
             tr.AddNewlyCreatedDBObject(slabPolyline, true);
-            AddXDataToSlabPolyline(slabPolyline, planPolyline, planImage.Id, slabImageId);
+            AddXDataToSlabPolyline(slabPolyline, planPolyline, planImage.Id, slabImageId, db);
             return slabPolyline;
         }
 
@@ -103,24 +144,6 @@ namespace MeshWelderAutocad.Commands.Test
             tr.AddNewlyCreatedDBObject(planImage, true);
             ClippingRasterBoundary(planImage, planPolyline);
             return planImage;
-        }
-
-        private static void ClippingRasterBoundary(RasterImage image, Polyline polyline, double verticalOffset = 0, double horizontalOffset = 0)
-        {
-            Point2dCollection clipBoundary = new Point2dCollection();
-            Matrix3d transformMatrix = image.PixelToModelTransform.Inverse();
-
-            for (int i = 0; i < polyline.NumberOfVertices; i++)
-            {
-                Point3d point3d = new Point3d(polyline.GetPoint3dAt(i).X + horizontalOffset, polyline.GetPoint3dAt(i).Y + verticalOffset, polyline.GetPoint3dAt(i).Z);
-                Point2d point = point3d.TransformBy(transformMatrix).Convert2d(new Plane());
-                clipBoundary.Add(point);
-            }
-
-            clipBoundary.Add(clipBoundary[0]);
-
-            image.SetClipBoundary(ClipBoundaryType.Poly, clipBoundary);
-            image.IsClipped = true;
         }
         /// <summary>
         /// Сюда попадают только полилинии плана или полилинии на слебе, других не будет
@@ -144,19 +167,9 @@ namespace MeshWelderAutocad.Commands.Test
 
                     if (polylineType == PolylineType.SlabPolyline)
                     {
-                        double verticalOffset = GetVerticalOffset(polyline);
-                        using (Transaction tr = db.TransactionManager.StartTransaction())
-                        {
-                            ObjectId planImageId = new ObjectId(new IntPtr(Convert.ToInt64(matchSet.PlanImageId)));
-                            RasterImage planImage = tr.GetObject(planImageId, OpenMode.ForWrite) as RasterImage;
-
-                            ObjectId planPolylineId = new ObjectId(new IntPtr(Convert.ToInt64(matchSet.PlanPolylineId)));
-                            Polyline planPolyline = tr.GetObject(planPolylineId, OpenMode.ForWrite) as Polyline;
-
-                            ClippingRasterBoundary(planImage, planPolyline, verticalOffset, horizontalOffset);
-                            planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(-horizontalOffset, -verticalOffset, 0)));
-                            tr.Commit();
-                        }
+                        UpdateClipBoundary(polyline, db, matchSet);
+                        _polylinesNeedToUpdateXData.Add(polyline.Id);
+                        polyline.Modified -= OnElementModified;
                         //Если была изменена не только позиция полилинии, то нужно поменять и позицию полилинии на плане
                     }
                     else if (polylineType == PolylineType.PlanPolyline)
@@ -174,11 +187,78 @@ namespace MeshWelderAutocad.Commands.Test
                     //что верните картинку обратно или самому вернуть ее где она была или все-таки лучше хранить просто положение картинки в xdata
                 }
             }
+
         }
 
-        private static double GetVerticalOffset(Polyline polyline)
+        private static void RemoveExistXData(Polyline polyline)
         {
-            throw new NotImplementedException();
+            ResultBuffer existingXData = polyline.XData;
+            if (existingXData != null)
+            {
+                TypedValue[] xdataValues = existingXData.AsArray();
+                if (xdataValues.Length > 0 && xdataValues[0].TypeCode == (int)DxfCode.ExtendedDataRegAppName
+                    && xdataValues[0].Value.ToString() == appName)
+                {
+                    polyline.XData = null; // Удаляем XData
+                }
+            }
+        }
+
+        private static Polyline GetPolylineById(Database db, ObjectId planPolylineId)
+        {
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                Polyline polyline = tr.GetObject(planPolylineId, OpenMode.ForRead) as Polyline;
+                tr.Commit();
+                return polyline;
+            }
+        }
+
+        private static void UpdateClipBoundary(Polyline polyline, Database db, SetLinkedElement matchSet)
+        {
+            double verticalOffset = GetVerticalOffset(db, polyline);
+            double horizontalOffset = GetHorizontalOffset(db, polyline);
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                RasterImage planImage = tr.GetObject(matchSet.PlanImageId, OpenMode.ForWrite) as RasterImage;
+                Polyline planPolyline = tr.GetObject(matchSet.PlanPolylineId, OpenMode.ForWrite) as Polyline;
+
+                planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(horizontalOffset, verticalOffset, 0)));
+                ClippingRasterBoundary(planImage, planPolyline, 0, 0);
+                tr.Commit();
+            }
+        }
+        private static void ClippingRasterBoundary(RasterImage image, Polyline polyline, double verticalOffset = 0, double horizontalOffset = 0)
+        {
+            Point2dCollection clipBoundary = new Point2dCollection();
+            Matrix3d transformMatrix = image.PixelToModelTransform.Inverse();
+
+            for (int i = 0; i < polyline.NumberOfVertices; i++)
+            {
+                Point3d point3d = new Point3d(polyline.GetPoint3dAt(i).X + horizontalOffset, polyline.GetPoint3dAt(i).Y + verticalOffset, polyline.GetPoint3dAt(i).Z);
+                Point2d point = point3d.TransformBy(transformMatrix).Convert2d(new Plane());
+                clipBoundary.Add(point);
+            }
+
+            clipBoundary.Add(clipBoundary[0]);
+
+            image.SetClipBoundary(ClipBoundaryType.Poly, clipBoundary);
+            image.IsClipped = true;
+        }
+
+        private static double GetVerticalOffset(Database db, Polyline polyline)
+        {
+            PolylineXData xData = GetXDataForPolyline(db, polyline);
+            Vertex currentFirstVertex = GetVertexes(polyline).First();
+            Vertex oldFirstVertex = xData.SlabPolylineVertexes.First();
+            return currentFirstVertex.Y - oldFirstVertex.Y;
+        }
+        private static double GetHorizontalOffset(Database db, Polyline polyline)
+        {
+            PolylineXData xData = GetXDataForPolyline(db, polyline);
+            Vertex currentFirstVertex = GetVertexes(polyline).First();
+            Vertex oldFirstVertex = xData.SlabPolylineVertexes.First();
+            return currentFirstVertex.X - oldFirstVertex.X;
         }
 
         private static List<SetLinkedElement> FilterSetWithAllExistObjects(List<SetLinkedElement> sets)
@@ -245,13 +325,14 @@ namespace MeshWelderAutocad.Commands.Test
 
         private static List<SetLinkedElement> GetSetsLinkedElement(Database db)
         {
+            Database db1 = HostApplicationServices.WorkingDatabase;
             List<SetLinkedElement> setsLinkedElement = new List<SetLinkedElement>();
-            List<PolylineXData> xDatas = GetXDataFromAllPolylines(db, appName);
+            List<PolylineXData> xDatas = GetXDataFromAllPolylines(db1);
 
             for (int i = 0; i < xDatas.Count; i++)
             {
                 ObjectId planPolylineId = GetObjectIdByLong(xDatas[i].PlanPolylineId);
-                if (setsLinkedElement.FirstOrDefault(s => s.PlanImageId.Equals(planPolylineId)) == null)
+                if (setsLinkedElement.FirstOrDefault(s => s.PlanPolylineId.Equals(planPolylineId)) == null)
                 {
                     ObjectId slabPolylineId = GetObjectIdByLong(xDatas[i].SlabPolylineId);
                     ObjectId slabImageId = GetObjectIdByLong(xDatas[i].SlabImageId);
@@ -445,7 +526,7 @@ namespace MeshWelderAutocad.Commands.Test
             return polylines;
         }
 
-        private static List<PolylineXData> GetXDataFromAllPolylines(Database db, string appName)
+        private static List<PolylineXData> GetXDataFromAllPolylines(Database db)
         {
             List<PolylineXData> polylineXDatas = new List<PolylineXData>();
 
@@ -470,6 +551,18 @@ namespace MeshWelderAutocad.Commands.Test
             }
             return polylineXDatas;
         }
+        private static PolylineXData GetXDataForPolyline(Database db, Polyline polyline)
+        {
+            PolylineXData polylineXData;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                ResultBuffer xData = polyline.GetXDataForApplication(appName);
+                polylineXData = ParseXDataJSON(xData);
+                tr.Commit();
+            }
+            return polylineXData;
+        }
+
         private static PolylineXData ParseXDataJSON(ResultBuffer xData)
         {
             foreach (TypedValue value in xData)
@@ -580,35 +673,39 @@ namespace MeshWelderAutocad.Commands.Test
         private static void AddXDataToSlabPolyline(Polyline slabPolyline,
             Polyline planPolyline,
             ObjectId planImageId,
-            ObjectId slabImageId)
+            ObjectId slabImageId,
+            Database db)
         {
-            ResultBuffer rb = CreateXData(slabPolyline, planPolyline, planImageId, slabImageId);
+            ResultBuffer rb = CreateXData(slabPolyline, planPolyline, planImageId, slabImageId, db);
             slabPolyline.XData = rb;
         }
         private static void AddXDataToPlanPolyline(Polyline slabPolyline,
             Polyline planPolyline,
             ObjectId planImageId,
-            ObjectId slabImageId)
+            ObjectId slabImageId,
+            Database db)
         {
             using (Transaction tr = planPolyline.Database.TransactionManager.StartTransaction())
             {
                 Polyline planPolylineForWrite = tr.GetObject(planPolyline.ObjectId, OpenMode.ForWrite) as Polyline;
-                ResultBuffer rb = CreateXData(slabPolyline, planPolyline, planImageId, slabImageId);
+                ResultBuffer rb = CreateXData(slabPolyline, planPolyline, planImageId, slabImageId, db);
                 planPolyline.XData = rb;
                 tr.Commit();
             }
         }
 
         private static ResultBuffer CreateXData(Polyline slabPolyline, Polyline planPolyline,
-            ObjectId planImageId, ObjectId slabImageId)
+            ObjectId planImageId, ObjectId slabImageId, Database db)
         {
-            RegAppTable regAppTable = (RegAppTable)doc.Database.RegAppTableId.GetObject(OpenMode.ForRead);
+            Database db1 = HostApplicationServices.WorkingDatabase;
+            var test1 = db1.RegAppTableId;
+            RegAppTable regAppTable = (RegAppTable)test1.GetObject(OpenMode.ForRead);
             if (!regAppTable.Has(appName))
             {
                 regAppTable.UpgradeOpen();
                 RegAppTableRecord regAppRecord = new RegAppTableRecord { Name = appName };
                 regAppTable.Add(regAppRecord);
-                doc.Database.TransactionManager.TopTransaction.AddNewlyCreatedDBObject(regAppRecord, true);
+                db.TransactionManager.TopTransaction.AddNewlyCreatedDBObject(regAppRecord, true);
             }
             var jsonXData = new PolylineXData()
             {
