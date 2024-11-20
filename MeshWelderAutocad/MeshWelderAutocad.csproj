@@ -92,7 +92,8 @@
     <Compile Include="Commands\Laser\Dtos\Data.cs" />
     <Compile Include="Commands\MeshWelder\Command.cs" />
     <Compile Include="Commands\Test\Command.cs" />
-    <Compile Include="Commands\Test\LinkElement.cs" />
+    <Compile Include="Commands\Test\SetLinkedElement.cs" />
+    <Compile Include="Commands\Test\PolylineType.cs" />
     <Compile Include="Commands\Test\Vertex.cs" />
     <Compile Include="Commands\Test\PolylineXData.cs" />
     <Compile Include="InitCommand.cs" />

@@ -11,6 +11,7 @@ namespace MeshWelderAutocad.Commands.Test
     [DataContract]
     public class PolylineXData
     {
+        //Тут по идее надо бы еще хранить позицию картинки на плане текущую и позицию слеба, может информацию об их подрезке также
         [DataMember]
         public long SlabPolylineId { get; set; }
         [DataMember]
