@@ -2,16 +2,13 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.GraphicsInterface;
 using Autodesk.AutoCAD.Runtime;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Json;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 using Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline;
@@ -26,6 +23,8 @@ namespace MeshWelderAutocad.Commands.Test
         [CommandMethod("Test")]
         public static void Test()
         {
+            //ругается при выборе прямоугольников
+            //подписка пропадает при закрытии автокада, нужно подписываться заново при открытии повторном
             try
             {
                 doc = Application.DocumentManager.MdiActiveDocument;
@@ -134,65 +133,131 @@ namespace MeshWelderAutocad.Commands.Test
             {
                 Database db = (sender as DBObject).Database;
                 List<SetLinkedElement> sets = GetSetsLinkedElement(db);
-                RemoveUnusedSetsElements(sets, db);
+                RemoveObjectsInNotFullSets(sets, db);
+                sets = FilterSetWithAllExistObjects(sets);
                 if (sender is Polyline polyline)
                 {
-                    if (polylineType == PolylineType.SlabPolyline
-                        && IsPossibleToChangeClipPosition(polyline, sets))
+                    PolylineType polylineType = GetTypePolyline(polyline, sets);
+                    SetLinkedElement matchSet = GetMatchSet(polyline, polylineType, sets);
+                    if (matchSet == null) // Если изменение было удаление полилинии на слебе или на плане, то ничего делать не требуется
+                        return;
+
+                    if (polylineType == PolylineType.SlabPolyline)
                     {
-                        PolylineType polylineType = GetTypePolyline(polyline, sets);
-                        UpdateXDataPolyline(polyline, db, sets); // обновляем только тогда, когда успешно было произведено перемещение
+                        double verticalOffset = GetVerticalOffset(polyline);
+                        using (Transaction tr = db.TransactionManager.StartTransaction())
+                        {
+                            ObjectId planImageId = new ObjectId(new IntPtr(Convert.ToInt64(matchSet.PlanImageId)));
+                            RasterImage planImage = tr.GetObject(planImageId, OpenMode.ForWrite) as RasterImage;
+
+                            ObjectId planPolylineId = new ObjectId(new IntPtr(Convert.ToInt64(matchSet.PlanPolylineId)));
+                            Polyline planPolyline = tr.GetObject(planPolylineId, OpenMode.ForWrite) as Polyline;
+
+                            ClippingRasterBoundary(planImage, planPolyline, verticalOffset, horizontalOffset);
+                            planImage.TransformBy(Matrix3d.Displacement(-new Vector3d(-horizontalOffset, -verticalOffset, 0)));
+                            tr.Commit();
+                        }
+                        //Если была изменена не только позиция полилинии, то нужно поменять и позицию полилинии на плане
                     }
+                    else if (polylineType == PolylineType.PlanPolyline)
+                    {
+                        //содержимое картинки должно остатся таким же но переместить на новое место за смещенной полилинией плана
+                        //в новом функционале также должен измениться контур, если мы меняем количество вершин или поворачиваем контур
+                        //а также должен пересроится контур 
+                    }
+                    //UpdateXDataPolyline(polyline, db, sets); 
                 }
                 else if (sender is RasterImage image)
                 {
-                    //Я хз, надо ли тут что-то делать, наверное нет
+                    //Ну вообще как будто реально не очень желательно слебы или картинки на плане перемещать куда-то, чтобы не следить за их координатами
+                    //Я хз, надо ли тут что-то делать, наверное нет, вообще как будто бы выдавать окошко,
+                    //что верните картинку обратно или самому вернуть ее где она была или все-таки лучше хранить просто положение картинки в xdata
                 }
             }
         }
+
+        private static double GetVerticalOffset(Polyline polyline)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static List<SetLinkedElement> FilterSetWithAllExistObjects(List<SetLinkedElement> sets)
+        {
+            return sets
+                .Where(set => !set.PlanPolylineId.IsErased
+                    && !set.SlabPolylineId.IsErased
+                    && !set.PlanImageId.IsErased
+                    && !set.SlabImageId.IsErased)
+                .ToList();
+        }
+
+        private static SetLinkedElement GetMatchSet(Polyline polyline, PolylineType polylineType, List<SetLinkedElement> sets)
+        {
+            if (polylineType == PolylineType.PlanPolyline)
+            {
+                return sets.FirstOrDefault(set => set.PlanPolylineId.Equals(polyline.Id));
+            }
+            else //Slab
+            {
+                return sets.FirstOrDefault(set => set.SlabPolylineId.Equals(polyline.Id));
+            }
+        }
+
         /// <summary>
         /// Переместить картинку на плане нужно,только если количество вершин осталось таким же у полилинии плана и полилинии слеба 
         /// оличество вершин осталось таким же и все вершины получили одинаковое смещение по сравнению с предыдущим положением
         /// </summary>
-        /// <param name="polyline"></param>
+        /// <param name="slabPolyline"></param>
         /// <param name="sets"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static bool IsPossibleToChangeClipPosition(Polyline polyline, List<SetLinkedElement> sets)
-        {
-            throw new NotImplementedException();
-        }
+        //private static bool IsPossibleToChangeClipPosition(Polyline slabPolyline, SetLinkedElement set)
+        //{
+        //    if ()
+        //    {
+
+        //    }
+        //}
 
         private static PolylineType GetTypePolyline(Polyline polyline, List<SetLinkedElement> sets)
         {
-            throw new NotImplementedException();
+            if (sets.FirstOrDefault(s => s.PlanPolylineId.Equals(polyline.Id)) != null)
+            {
+                return PolylineType.PlanPolyline;
+            }
+            else
+            {
+                return PolylineType.SlabPolyline;
+            }
         }
 
-        private static void UpdateXDataPolyline(Polyline polyline, Database db, List<SetLinkedElement> sets)
-        {
-            if (polylineType == PolylineType.PlanPolyline)
-            {
-                AddXDataToPlanPolyline(polyline,)
-            }
-            else if (polylineType == PolylineType.SlabPolyline)
-            {
-                AddXDataToSlabPolyline(polyline,)
-            }
-        }
+        //private static void UpdateXDataPolyline(Polyline polyline, Database db, PolylineType polylineType, SetLinkedElement set)
+        //{
+        //    if (polylineType == PolylineType.PlanPolyline)
+        //    {
+        //        AddXDataToPlanPolyline(polyline,)
+        //    }
+        //    else if (polylineType == PolylineType.SlabPolyline)
+        //    {
+        //        AddXDataToSlabPolyline(polyline,)
+        //    }
+        //}
 
         private static List<SetLinkedElement> GetSetsLinkedElement(Database db)
         {
             List<SetLinkedElement> setsLinkedElement = new List<SetLinkedElement>();
             List<PolylineXData> xDatas = GetXDataFromAllPolylines(db, appName);
-            List<ObjectId> planPolylineIds = GetObjectIds(xDatas.Select(data => data.PlanPolylineId).Distinct());
-            List<ObjectId> slabPolylineIds = GetObjectIds(xDatas.Select(data => data.SlabPolylineId).Distinct());
-            List<ObjectId> slabImageIds = GetObjectIds(xDatas.Select(data => data.SlabImageId).Distinct());
-            List<ObjectId> planImageIds = GetObjectIds(xDatas.Select(data => data.PlanImageId).Distinct());
 
-            for (int i = 0; i < planPolylineIds.Count; i++)
+            for (int i = 0; i < xDatas.Count; i++)
             {
-                setsLinkedElement.Add(new SetLinkedElement(planImageIds[i], slabImageIds[i],
-                    planPolylineIds[i], slabPolylineIds[i]));
+                ObjectId planPolylineId = GetObjectIdByLong(xDatas[i].PlanPolylineId);
+                if (setsLinkedElement.FirstOrDefault(s => s.PlanImageId.Equals(planPolylineId)) == null)
+                {
+                    ObjectId slabPolylineId = GetObjectIdByLong(xDatas[i].SlabPolylineId);
+                    ObjectId slabImageId = GetObjectIdByLong(xDatas[i].SlabImageId);
+                    ObjectId planImageId = GetObjectIdByLong(xDatas[i].PlanImageId);
+                    setsLinkedElement.Add(new SetLinkedElement(planImageId, slabImageId, planPolylineId, slabPolylineId));
+                }
             }
             return setsLinkedElement;
         }
@@ -203,19 +268,19 @@ namespace MeshWelderAutocad.Commands.Test
         /// <param name="polyline"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static bool IsLinkElementIsExist(Polyline polyline, List<SetLinkedElement> linkElements)
-        {
-            SetLinkedElement match = linkElements.FirstOrDefault();
-            if (match == null)
-            {
-                //по идее такого быть не может потому что мы подписываем на событие изменение только линии с xData
-                return false;
-            }
-        }
+        //private static bool IsLinkElementIsExist(Polyline polyline, List<SetLinkedElement> linkElements)
+        //{
+        //    SetLinkedElement match = linkElements.FirstOrDefault();
+        //    if (match == null)
+        //    {
+        //        //по идее такого быть не может потому что мы подписываем на событие изменение только линии с xData
+        //        return false;
+        //    }
+        //}
 
-        private static List<ObjectId> GetObjectIds(IEnumerable<long> ids)
+        private static ObjectId GetObjectIdByLong(long number)
         {
-            return ids.Select(id => new ObjectId(new IntPtr(id))).ToList();
+            return new ObjectId(new IntPtr(number));
         }
 
         //    //if (e.DBObject is Polyline polyline)
@@ -273,33 +338,33 @@ namespace MeshWelderAutocad.Commands.Test
         //    //ВЕЗДЕ НЕ ЗАБЫТЬ ПОМЕНЯТЬ XDATA на новую, если стараю не актуальная
         //}
 
-        private static void RemoveUnusedSetsElements(List<SetLinkedElement> linkElements, Database db)
+        private static void RemoveObjectsInNotFullSets(List<SetLinkedElement> sets, Database db)
         {
-            foreach (SetLinkedElement linkElement in linkElements)
+            foreach (SetLinkedElement set in sets)
             {
-                if (linkElement.SlabPolylineId.IsErased 
-                    || linkElement.PlanPolylineId.IsErased
-                    || linkElement.PlanImageId.IsErased 
-                    || linkElement.SlabImageId.IsErased) 
+                if (set.SlabPolylineId.IsErased
+                    || set.PlanPolylineId.IsErased
+                    || set.PlanImageId.IsErased
+                    || set.SlabImageId.IsErased)
                 {
                     using (Transaction tr = db.TransactionManager.StartTransaction())
                     {
                         //TODO На картинку самого слеба подписку надо удалять и как?
-                        if (!linkElement.PlanImageId.IsErased)
+                        if (!set.PlanImageId.IsErased)
                         {
-                            DBObject planImage = GetDBObjectById(linkElement.PlanImageId, tr);
+                            DBObject planImage = GetDBObjectById(set.PlanImageId, tr);
                             planImage.Modified -= OnElementModified;
                             planImage.Erase();
                         }
-                        if (!linkElement.PlanPolylineId.IsErased)
+                        if (!set.PlanPolylineId.IsErased)
                         {
-                            DBObject planPolyline = GetDBObjectById(linkElement.PlanPolylineId, tr);
+                            DBObject planPolyline = GetDBObjectById(set.PlanPolylineId, tr);
                             planPolyline.Modified -= OnElementModified;
                             planPolyline.Erase();
                         }
-                        if (!linkElement.SlabPolylineId.IsErased)
+                        if (!set.SlabPolylineId.IsErased)
                         {
-                            DBObject slabPolyline = GetDBObjectById(linkElement.PlanPolylineId, tr);
+                            DBObject slabPolyline = GetDBObjectById(set.PlanPolylineId, tr);
                             slabPolyline.Modified -= OnElementModified;
                             slabPolyline.Erase();
                         }
@@ -547,10 +612,10 @@ namespace MeshWelderAutocad.Commands.Test
             }
             var jsonXData = new PolylineXData()
             {
-                PlanImageId = ParseObjectIdToString(planImageId),
-                PlanPolylineId = ParseObjectIdToString(planPolyline.Id),
-                SlabImageId = ParseObjectIdToString(slabImageId),
-                SlabPolylineId = ParseObjectIdToString(slabPolyline.Id),
+                PlanImageId = ParseObjectIdToLong(planImageId),
+                PlanPolylineId = ParseObjectIdToLong(planPolyline.Id),
+                SlabImageId = ParseObjectIdToLong(slabImageId),
+                SlabPolylineId = ParseObjectIdToLong(slabPolyline.Id),
                 SlabPolylineVertexes = GetVertexes(slabPolyline),
                 PlanPolylineVertexes = GetVertexes(planPolyline),
             };
@@ -569,7 +634,7 @@ namespace MeshWelderAutocad.Commands.Test
             return rb;
         }
 
-        private static long ParseObjectIdToString(ObjectId objectId)
+        private static long ParseObjectIdToLong(ObjectId objectId)
         {
             return Convert.ToInt64(objectId.ToString().Replace("(", "").Replace(")", ""));
         }
