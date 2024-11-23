@@ -63,9 +63,9 @@ namespace MeshWelderAutocad.Commands.Laser
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
                     }
-                    //newDoc.CloseAndDiscard();
+                    newDoc.CloseAndDiscard();
                 }
-                //File.Delete(jsonFilePath);
+                File.Delete(jsonFilePath);
             }
             catch (CustomException e)
             {
