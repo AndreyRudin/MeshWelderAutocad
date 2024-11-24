@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MeshWelderAutocad.Commands.Test
 {
-    internal enum PolylineType
+    public enum PolylineType
     {
         SlabPolyline,
         PlanPolyline

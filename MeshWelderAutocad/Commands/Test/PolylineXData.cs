@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace MeshWelderAutocad.Commands.Test
 {
@@ -13,13 +14,15 @@ namespace MeshWelderAutocad.Commands.Test
     {
         //Тут по идее надо бы еще хранить позицию картинки на плане текущую и позицию слеба, может информацию об их подрезке также
         [DataMember]
-        public long SlabPolylineId { get; set; }
+        public Guid SlabPolylineGuid { get; set; }
         [DataMember]
-        public long PlanPolylineId { get; set; }
+        public Guid PlanPolylineGuid { get; set; }
         [DataMember]
-        public long PlanImageId { get; set; }
+        public Guid PlanImageGuid { get; set; }
         [DataMember]
-        public long SlabImageId { get; set; }
+        public Guid SlabImageGuid { get; set; }
+        //[DataMember]
+        //public PolylineType PolylineType { get; set; }
         [DataMember]
         public List<Vertex> SlabPolylineVertexes { get; set; }
         [DataMember]

@@ -17,6 +17,8 @@ using Line = Autodesk.AutoCAD.DatabaseServices.Line;
 using Path = System.IO.Path;
 using RibbonButton = Autodesk.Windows.RibbonButton;
 using RibbonPanelSource = Autodesk.Windows.RibbonPanelSource;
+using Application = Autodesk.AutoCAD.ApplicationServices.Application;
+using MeshWelderAutocad.Commands.Test;
 
 namespace MeshWelderAutocad
 {
@@ -148,7 +150,10 @@ namespace MeshWelderAutocad
         }
         public void Initialize()
         {
-            
+            //Application.DocumentManager.DocumentActivated += (sender, e) =>
+            //{
+            //    Command.InitSlabMaster();
+            //};
         }
         public void Terminate()
         {
