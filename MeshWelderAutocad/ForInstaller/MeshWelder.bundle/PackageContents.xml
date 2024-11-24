@@ -12,8 +12,8 @@
                     LoadOnCommandInvocation="True" 
                     LoadOnRequest="True">
       <Commands>
-		  <Command Local="CreateMesh" Global="CreateMesh"/>
-		  <Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
+        <Command Local="CreateMesh" Global="CreateMesh"/>
+        <Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
         <Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
       </Commands>
     </ComponentEntry>
