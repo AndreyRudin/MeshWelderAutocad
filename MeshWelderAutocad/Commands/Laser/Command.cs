@@ -27,6 +27,10 @@ namespace MeshWelderAutocad.Commands.Laser
             try
             {
                 string jsonFilePath = SelectJSON();
+                if (string.IsNullOrWhiteSpace(jsonFilePath))
+                {
+                    return;
+                }
                 Data data = GetData(jsonFilePath);
                 string generalDwgDirectory = CreateDirectoryForDrawings(jsonFilePath, data.RevitFileName);
 
@@ -148,8 +152,8 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static void CreatePockets(string layerName)
         {
-            double width = 190.0;
-            double height = 170.0;
+            double width = 165.0;
+            double height = 150.0;
             if (_panel.Pockets.Count != 0)
             {
                 CreateLayer(_db, layerName);
@@ -331,7 +335,7 @@ namespace MeshWelderAutocad.Commands.Laser
             var result = openFileDialog.ShowDialog();
 
             if (result != DialogResult.OK)
-                throw new CustomException("Файл не был выбран");
+                return string.Empty;
 
             return openFileDialog.FileName;
         }
