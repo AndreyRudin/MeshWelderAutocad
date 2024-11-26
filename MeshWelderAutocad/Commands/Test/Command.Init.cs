@@ -42,7 +42,7 @@ namespace MeshWelderAutocad.Commands.Test
                         ResultBuffer xData = polyline.GetXDataForApplication(appName);
                         if (xData != null)
                         {
-                            PolylineXData parsedXData = ParseXDataJSON(xData);
+                            XData parsedXData = ParseXDataJSON(xData);
                             //slabPolylineIds.Add(GetObjectIdByLong(parsedXData.SlabPolylineHandle));
                         }
                     }

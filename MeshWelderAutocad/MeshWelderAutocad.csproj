@@ -96,7 +96,7 @@
     <Compile Include="Commands\Test\SetLinkedElement.cs" />
     <Compile Include="Commands\Test\PolylineType.cs" />
     <Compile Include="Commands\Test\Vertex.cs" />
-    <Compile Include="Commands\Test\PolylineXData.cs" />
+    <Compile Include="Commands\Test\XData.cs" />
     <Compile Include="InitCommand.cs" />
     <Compile Include="lsp\Info.cs" />
     <Compile Include="Commands\MeshWelder\Dtos\Point.cs" />
