@@ -117,11 +117,11 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 case 8.0:
                     return Color.FromRgb(255, 255, 0);
                 case 10.0:
-                    return Color.FromRgb(0, 255, 0);
+                    return Color.FromRgb(0, 128, 0);
                 case 12.0:
                     return Color.FromRgb(0, 255, 255);
                 case 28.0:
-                    return Color.FromRgb(0, 128, 0);
+                    return Color.FromRgb(0, 255, 0);
                 default:
                     MessageBox.Show($"Обнаружен неизвестный диаметр: {diameter}. Принят цвет по умолчанию RGB(128,128,128)");
                     return Color.FromRgb(128, 128, 128);
