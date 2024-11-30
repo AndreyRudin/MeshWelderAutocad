@@ -25,6 +25,11 @@ using MeshWelderAutocad.Commands.Test;
 
 namespace MeshWelderAutocad
 {
+    //удаление связанных объектов при удалении одного из них
+    //есть ли у документа hash какой-нибудь
+    //отписки при закрытии документа
+    //ситуация когда человек в одной сессии автокада закрывает и открывает один и тот же документ
+    //предупреждения если пользователь творит хуйню
     public class App : IExtensionApplication
     {
         public const string RibbonTitle = "DNS_Plugins";

@@ -94,7 +94,6 @@
     <Compile Include="Commands\MeshWelder\Command.cs" />
     <Compile Include="Commands\Test\Command.cs" />
     <Compile Include="Commands\Test\Command.Init.cs" />
-    <Compile Include="Commands\Test\Handlers\CommandEventHandler.cs" />
     <Compile Include="Commands\Test\SetLinkedElement.cs" />
     <Compile Include="Commands\Test\PolylineType.cs" />
     <Compile Include="Commands\Test\XData\BaseXData.cs" />
