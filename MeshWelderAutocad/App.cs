@@ -1,16 +1,19 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.Colors;
-using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.Windows;
+using MeshWelderAutocad.Commands.Test;
+using MeshWelderAutocad.Properties;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Json;
+using System.Drawing;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 using Line = Autodesk.AutoCAD.DatabaseServices.Line;
@@ -24,140 +27,161 @@ namespace MeshWelderAutocad
 {
     public class App : IExtensionApplication
     {
-        [CommandMethod("CreateMesh")]
-        public static void CreateMesh()
+        public const string RibbonTitle = "DNS_Plugins";
+        public const string RibbonId = "DNSPluginsId";
+        private static Dictionary<Document, bool> _documentSubscriptions = new Dictionary<Document, bool>();
+
+        [CommandMethod("InitMeshWelder", CommandFlags.Transparent)]
+        public void Init()
         {
-            //внедрить отправку данных о запуск - файл отправлять на почту например или просто
-            //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
+            CreateRibbon();
+            Application.DocumentManager.DocumentActivated += OnDocumentActivated;
+            Application.DocumentManager.DocumentCreated += OnDocumentActivated;
 
-            //Вызов команды из вкладки доступен даже если нету открытого чертежа
+            AddHandleToCommandEnded(); //INFO если вместе с автокадом открывается документ уже, то на него события выше не срабатывают почему-то
 
-            var openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
-            openFileDialog.FilterIndex = 1;
-            openFileDialog.Multiselect = false;
-
-            var result = openFileDialog.ShowDialog();
-
-            if (result != System.Windows.Forms.DialogResult.OK)
-                return;
-
-
-            string jsonFilePath = openFileDialog.FileName;
-            string jsonContent = File.ReadAllText(jsonFilePath);
-
-            DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(List<Mesh>));
-            List<Mesh> meshs;
-            using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonContent)))
+            //TODO Если в одной активной сессии человек закроет документ, а потом откроет,
+            //нужно чтобы подписка была осуществлена, т.е при закрытии нужно удалять информацию о подписке из _documentSubscriptions
+        }
+        private void OnDocumentActivated(object sender, DocumentCollectionEventArgs e)
+        {
+            AddHandleToCommandEnded();
+        }
+        private void AddHandleToCommandEnded()
+        {
+            Document newActiveDoc = Application.DocumentManager.MdiActiveDocument;
+            if (newActiveDoc != null) //INFO переход на стартовый экран, событие сработает, но документа там не будет
             {
-                object objResponse = jsonSerializer.ReadObject(stream);
-                meshs = objResponse as List<Mesh>;
-            }
-
-            if (meshs == null)
-            {
-                MessageBox.Show("Некорректный JSON. Требуется выбрать корректный файл");
-                return;
-            }
-
-            string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
-            string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string generalDwgDirectory = Path.Combine(jsonDirectory, $"{meshs[0].RevitModelName}_DWG-{timeStamp}");
-            Directory.CreateDirectory(generalDwgDirectory);
-
-            string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
-            string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
-
-            foreach (var mesh in meshs)
-            {
-                Document newDoc = acadApp.DocumentManager.Add(templatePath);
-                Database db = newDoc.Database;
-
-                var directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
-                var path = Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf");
-
-                using (DocumentLock docLock = newDoc.LockDocument())
+                if (!_documentSubscriptions.ContainsKey(newActiveDoc) || !_documentSubscriptions[newActiveDoc])
                 {
-                    CreateLayer(db, "MESH");
-                    using (Transaction tr = db.TransactionManager.StartTransaction())
+                    List<ObjectId> slabPolylineIds = Command.GetSlabPolylineIds();
+                    if (slabPolylineIds.Count != 0)
                     {
-                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-                        LayerTable layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForWrite);
-
-                        foreach (var rebar in mesh.Rebars)
+                        using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
                         {
-                            Line line = new Line(
-                                new Point3d(rebar.StartPoint.X, rebar.StartPoint.Y, 0),
-                                new Point3d(rebar.EndPoint.X, rebar.EndPoint.Y, 0));
-                            line.Color = GetColor(rebar.Diameter);
-                            ObjectId layerId = layerTable["MESH"];
-                            line.LayerId = layerId;
-                            modelSpace.AppendEntity(line);
-                            tr.AddNewlyCreatedDBObject(line, true);
+                            foreach (var id in slabPolylineIds)
+                            {
+                                tr.GetObject(id, OpenMode.ForWrite).Modified += Command.OnSlabPolylineModified;
+                            }
+                            tr.Commit();
                         }
-
-                        ObjectId layerIdActive = layerTable["MESH"];
-                        db.Clayer = layerIdActive;
-
-                        tr.Commit();
                     }
-
-                    if (!Directory.Exists(directoryDwgForPanel))
-                        Directory.CreateDirectory(directoryDwgForPanel);
-                    
-                    newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
-
-
+                        
+                    newActiveDoc.CommandEnded += Command.OnCommandEnded;
+                    _documentSubscriptions[newActiveDoc] = true;
                 }
-                newDoc.CloseAndDiscard();
-            }
-            File.Delete(jsonFilePath);
-        }
-
-        public static Color GetColor(double diameter)
-        {
-            switch (diameter)
-            {
-                case 6.0:
-                    return Color.FromRgb(255, 0, 0);
-                case 8.0:
-                    return Color.FromRgb(255, 255, 0);
-                case 10.0:
-                    return Color.FromRgb(0, 255, 0);
-                case 12.0:
-                    return Color.FromRgb(0, 255, 255);
-                default:
-                    return Color.FromRgb(128, 128, 128);
             }
         }
 
-        public static void CreateLayer(Database db, string name)
+        private void CreateRibbon()
         {
-            using (Transaction tr = db.TransactionManager.StartTransaction())
+            RibbonControl ribbon = ComponentManager.Ribbon;
+            if (ribbon != null)
             {
-                LayerTable layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
-                using (LayerTableRecord layer = new LayerTableRecord())
+                RibbonTab rtab = ribbon.FindTab(RibbonId);
+                if (rtab != null)
                 {
-                    layer.Name = name;
-                    layerTable.UpgradeOpen();
-                    ObjectId layerId = layerTable.Add(layer);
-                    tr.AddNewlyCreatedDBObject(layer, true);
+                    ribbon.Tabs.Remove(rtab);
                 }
-                tr.Commit();
-                tr.Dispose();
+
+                rtab = new RibbonTab();
+                rtab.Title = RibbonTitle;
+                rtab.Id = RibbonId;
+                ribbon.Tabs.Add(rtab);
+                AddContentToTab(rtab);
+                rtab.IsActive = true;
             }
         }
+        private void AddContentToTab(RibbonTab rtab)
+        {
+            rtab.Panels.Add(AddPanelOne());
+        }
+        private static RibbonPanel AddPanelOne()
+        {
+            var rps = new RibbonPanelSource();
+            rps.Title = "    MeshWelder    ";
+            RibbonPanel rp = new RibbonPanel();
+            rp.Source = rps;
+
+            var addinAssembly = typeof(App).Assembly;
+            RibbonButton btnMeshWelder = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Подготовка чертежей сеток\nдля сеткосварочной машины",
+                ShowText = true,
+                ToolTip = "Плагин необходим для приведения DWG-файла с чертежом арматурной сетки, полученного путем экспорта из Revit или выполненного в AutoCAD, в соответствие с требованиями импорта в специализированное ПО \"Meshbuilder\".\r\n\r\nРабота выполняется в двух вариантах:" +
+                    "\n   - Исходные данные приходят из Revit;" +
+                    "\n   - Исходные данные приходят из AutoCAD." +
+                    "\n\n1. Если армирование выполнялось в Revit, необходимо выполнить экспорт вида в DWG. Для этого на вкладке \"DNS_Plugins\" на панели \"MeshWelder\" выбрать кнопку \"MeshExport\". В открывшемся меню выбрать виды, которые необходимо выгрузить в DWG и указать путь сохранения файлов. Выгрузка происходит в формате \"1 вид = 1 файл DWG\". Экспорт в DWG выполняется на создаваемый слой \"MESH\" (без кавычек). Экспортируемые элементы переносятся в DWG категорией \"отрезок\". В зависимости от диаметра арматурных стержней в Revit (параметр \"ADSK_Наименование\"), линиям присваиваются цвета. Затем у сетки определяется габарит, нижний левый угол которого переносится в абсолютные координаты 0.0. Если в файле есть слои, кроме \"MESH\", то они удаляются, а неудаляемые - скрываются, замораживаются и блокируются." +
+                    "\n\n2. Если армирование выполнялось в AutoCAD, то на этапе разработки КЖ.И стержни должны выполняться категорией \"полилинии\", иметь замкнутый контур, углы между отрезками контура 90°, строиться на слое \"MESH\" (без кавычек), а также иметь цвета, соответствующие их диаметру. Находясь в окне AutoCAD, указать папку, из которой будут обрабатываться файлы формата DWG, а также папку, куда будут сохранены результаты преобразования. Обработка - пакетная. В каждом файле проводится проверка полилиний. Если элементы категории \"полилиния\" имеют замкнутый контур, то внутри него строится продольная средняя линия категорией \"отрезок\", а полилиния удаляется. Если элементы категории \"полилиния\" не имеют замкнутого контура, то они преобразуются в элементы категории \"отрезок\". В каждом файле у сетки определяется габарит, нижний левый угол которого переносится в абсолютные координаты 0.0. Если в файле есть слои, кроме \"MESH\", то они удаляются, а неудаляемые - скрываются, замораживаются и блокируются.",
+                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                CommandHandler = new RelayCommand((_) => Commands.MeshWelder.Command.CreateMesh(), (_) => true)
+            };
+            RibbonButton btnLaser = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Лазер",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
+            };
+            RibbonButton btnTest = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Тест",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                CommandHandler = new RelayCommand((_) => Commands.Test.Command.Test(), (_) => true)
+            };
+            rps.Items.Add(btnTest);
+            RibbonButton btnTest2 = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Подписка\nна события",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                CommandHandler = new RelayCommand((_) => Commands.Test.Command.InitSlabMaster(), (_) => true)
+            };
+            rps.Items.Add(btnTest2);
+
+            rps.Items.Add(btnMeshWelder);
+            rps.Items.Add(btnLaser);
+
+            return rp;
+        }
+        private static ImageSource GetImageSourceByBitMapFromResource(Bitmap source)
+        {
+            return Imaging.CreateBitmapSourceFromHBitmap(
+                source.GetHbitmap(),
+                IntPtr.Zero,
+                Int32Rect.Empty,
+                BitmapSizeOptions.FromEmptyOptions()
+            );
+        }
+
         public void Initialize()
         {
-            //Application.DocumentManager.DocumentActivated += (sender, e) =>
-            //{
-            //    Command.InitSlabMaster();
-            //};
+            
         }
+
         public void Terminate()
         {
-
+            //TODO отписка от всех событий документов
         }
     }
 }

@@ -39,10 +39,10 @@ namespace MeshWelderAutocad.Commands.Test
                     {
                         plIds.Add(polyline.Id.ToString());
                         handles.Add(polyline.Id.Handle.ToString());
-                        ResultBuffer xData = polyline.GetXDataForApplication(appName);
+                        ResultBuffer xData = polyline.GetXDataForApplication(_appName);
                         if (xData != null)
                         {
-                            XData parsedXData = ParseXDataJSON(xData);
+                            SlabPolylineXData parsedXData = ParseXDataJSON(xData);
                             //slabPolylineIds.Add(GetObjectIdByLong(parsedXData.SlabPolylineHandle));
                         }
                     }

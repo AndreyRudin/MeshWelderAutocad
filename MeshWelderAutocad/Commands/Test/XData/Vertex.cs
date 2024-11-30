@@ -14,13 +14,10 @@ namespace MeshWelderAutocad.Commands.Test
         public double X { get; set; }
         [DataMember]
         public double Y { get; set; }
-        [DataMember]
-        public double Z { get; set; }
-        public Vertex(double x, double y, double z)
+        public Vertex(double x, double y)
         {
             X = x;
             Y = y;
-            Z = z;
         }
     }
 }

@@ -21,6 +21,9 @@ namespace MeshWelderAutocad.Commands.Laser
         private static LayerTable _layerTable;
         private static BlockTableRecord _modelSpace;
         private static Database _db;
+
+        private static double _widthDetail5 = 360.0;
+        private static double _heightDetail5 = 240.0;
         [CommandMethod("CreateDrawingsForLaser")]
         public static void CreateDrawingsForLaser()
         {
@@ -65,11 +68,11 @@ namespace MeshWelderAutocad.Commands.Laser
                             CreateAnchors("5. Анкера");
                             tr.Commit();
                         }
-                        newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
+                        //newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
                     }
-                    newDoc.CloseAndDiscard();
+                    //newDoc.CloseAndDiscard();
                 }
-                File.Delete(jsonFilePath);
+                //File.Delete(jsonFilePath);
             }
             catch (CustomException e)
             {
@@ -211,7 +214,6 @@ namespace MeshWelderAutocad.Commands.Laser
                     double maxX = detail6.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(maxX, minY, maxX, maxY, layerId);
-                    //CreateLine(minX , minY + 30, maxX, maxY - 30, layerId);
                 }
             }
             else if (_panel.EmbeddedParts9.Count != 0)
@@ -225,28 +227,31 @@ namespace MeshWelderAutocad.Commands.Laser
                     double minX = detail6.X - width / 2.0;
                     double maxX = detail6.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
-                    //CreateLine(minX, minY + 30, maxX, maxY - 30, layerId);
                 }
             }
         }
 
         private static void CreateEmbeddedDetail5(string layerName)
         {
-            double width = 360.0;
-            double height = 240.0;
             if (_panel.EmbeddedParts5.Count != 0)
             {
                 CreateLayer(_db, layerName);
                 ObjectId layerId = _layerTable[layerName];
                 foreach (var detail5 in _panel.EmbeddedParts5)
                 {
-
+                    double maxY = detail5.Y + _heightDetail5 / 2.0;
+                    double minY = detail5.Y - _heightDetail5 / 2.0;
+                    double minX = detail5.X - _widthDetail5 / 2.0;
+                    double maxX = detail5.X + _widthDetail5 / 2.0;
+                    CreateLine(minX, minY, minX, maxY, layerId);
+                    CreateLine(minX, maxY, maxX, maxY, layerId);
+                    CreateLine(maxX, maxY, maxX, minY, layerId);
+                    CreateLine(maxX, minY, minX, minY, layerId);
                 }
             }
         }
         private static void CreateOpenings(string layerName)
         {
-            //TODO у нижней линии дубляж с опалубкой может быть получается
             ObjectId layerId = _layerTable[layerName];
             foreach (var opening in _panel.Formwork.Openings)
             {
