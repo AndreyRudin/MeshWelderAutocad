@@ -19,13 +19,18 @@ using Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline;
 //не менять количество вершин и положение вершин по отдельности в полилниях плана или полилиниях слеба
 //не поворачивать никакие объекты уже связанные между собой
 //не менять количество вершин в обрезке картинки плана
+//Не открывать второй раз один и тот же документ
 
 //нельзя копировать полилинии и картинки с xData, следить за таким и откатывать назад действие
 //нельзя менять количество вершин в полилиниях, следить за таким и откатывать назад действие
-//учесть что одна картинка слеба может ссылаться на несколько полилиний на плане
 
 namespace MeshWelderAutocad.Commands.Test
 {
+    //!ругается при выборе прямоугольников
+    //!удаление связанных объектов при удалении одного из них
+    //!выделить в отедльное приложение 
+    //!записать видео с работой, перезакрытием документа и несколькими слебами, одновременным движением линий
+    //!предупреждения если пользователь творит хуйню
     internal partial class Command
     {
         public static string _appName = "SlabMaster";
@@ -34,13 +39,11 @@ namespace MeshWelderAutocad.Commands.Test
         private static Guid _planPolylineGuid;
         private static Guid _slabImageGuid;
         private static Guid _slabPolylineGuid;
-        private static List<Vertex> _slabPolylineVertexes;
         private static Vertex _slabPolylineCentroid;
         [CommandMethod("Test")]
         public static void Test()
         {
             //Проверить как сейчас работает если поменять количество вершин или повернуть полигон на плане и на слебе?
-            //ругается при выборе прямоугольников
             //подписка пропадает при закрытии автокада, нужно подписываться заново при открытии повторном
             //Проблемы при слежение за всеми объектами сразу, транзакции одновременно открываются что ли? по идее нужно бы подписку хотя бы за линией плана сделать, а в идеале за картинками бы тоже следить
             try
@@ -58,7 +61,7 @@ namespace MeshWelderAutocad.Commands.Test
                 {
                     using (Transaction tr = doc.TransactionManager.StartTransaction())
                     {
-                        Polyline planPolyline = SelectPlanPolyLine(); // выбирать можно только полилинию без xData
+                        Polyline planPolyline = SelectPlanPolyLine();
                         planPolylineId = planPolyline.Id;
 
                         Point3d pointInPlanPolyline = SelectPoint("Выберите базовую точку для копирования: ");
@@ -122,7 +125,7 @@ namespace MeshWelderAutocad.Commands.Test
         }
 
         /// <summary>
-        /// Сюда попадают только полилинии плана или полилинии на слебе, других не будет
+        /// Сюда попадают только полилинии слеба, потому что подписка только у них есть
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -144,8 +147,7 @@ namespace MeshWelderAutocad.Commands.Test
                     {
                         UpdateClipBoundary(slabPolyline, matchSet);
                         _slabPolylinesNeedToAddModifiedHandle.Add(slabPolyline.Id);
-                        slabPolyline.Modified -= OnSlabPolylineModified; //INFO это нужно, чтобы после изменения Xdata не было бесконечного цикла модификации полилинии
-                        //Если была изменена не только позиция полилинии, то нужно поменять и позицию полилинии на плане
+                        slabPolyline.Modified -= OnSlabPolylineModified; //INFO это нужно, чтобы после изменения Xdata не было бесконечного запуска этого метода модификации полилинии
                     }
 
                     //else if (polylineType == PolylineType.PlanPolyline)
@@ -177,7 +179,8 @@ namespace MeshWelderAutocad.Commands.Test
                     RemoveObjectsInNotFullSets(GetSetsLinkedElement(slabPolylinesXDatas));
                 }
 
-                //и если линия была скопирована с xData то уведомить пользователя хотя бы
+                //и если линия была скопирована с xData то уведомить пользователя хотя бы, что так делать низя
+                //картинки тоже нельзя копировать у которых есть xdata
 
                 if (_slabPolylinesNeedToAddModifiedHandle.Count > 0)
                 {
@@ -311,19 +314,6 @@ namespace MeshWelderAutocad.Commands.Test
 
             return new Vertex(centerX, centerY);
         }
-        //private static double GetVerticalOffset(Polyline polyline)
-        //{
-        //    Vertex currentFirstVertex = GetVertexes(polyline).First();
-        //    Vertex oldFirstVertex = xData.SlabPolylineVertexes.First();
-        //    return currentFirstVertex.Y - oldFirstVertex.Y;
-        //}
-        //private static double GetHorizontalOffset(Polyline polyline)
-        //{
-        //    Vertex currentFirstVertex = GetVertexes(polyline).First();
-        //    Vertex oldFirstVertex = xData.SlabPolylineVertexes.First();
-        //    return currentFirstVertex.X - oldFirstVertex.X;
-        //}
-
         private static List<SetLinkedElement> FilterSetWithAllExistObjects(List<SetLinkedElement> sets)
         {
             return sets
@@ -340,7 +330,7 @@ namespace MeshWelderAutocad.Commands.Test
             {
                 return sets.FirstOrDefault(set => set.PlanPolylineId.Equals(polyline.Id));
             }
-            else //Slab
+            else
             {
                 return sets.FirstOrDefault(set => set.SlabPolylineId.Equals(polyline.Id));
             }
@@ -411,7 +401,6 @@ namespace MeshWelderAutocad.Commands.Test
                 {
                     using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
                     {
-                        //TODO На картинку самого слеба подписку надо удалять и как?
                         if (!set.PlanImageId.IsErased && !set.PlanImageId.IsNull)
                         {
                             DBObject planImage = GetDBObjectById(set.PlanImageId, tr);
@@ -473,39 +462,6 @@ namespace MeshWelderAutocad.Commands.Test
 
             return rasterImages;
         }
-
-        private static List<Polyline> GetPolylinesByIds(IEnumerable<long> ids, Database db)
-        {
-            List<Polyline> polylines = new List<Polyline>();
-            using (Transaction trans = db.TransactionManager.StartTransaction())
-            {
-                foreach (long idValue in ids)
-                {
-                    ObjectId id = new ObjectId(new IntPtr(idValue));
-
-                    if (id.IsValid && !id.IsErased)
-                    {
-                        DBObject obj = trans.GetObject(id, OpenMode.ForRead, false);
-
-                        if (obj is Polyline polyline)
-                        {
-                            polylines.Add(polyline);
-                        }
-                        else
-                        {
-                            polylines.Add(null);
-                        }
-                    }
-                    else
-                    {
-                        polylines.Add(null);
-                    }
-                }
-                trans.Commit();
-            }
-
-            return polylines;
-        }
         private static List<SlabPolylineXData> GetXDatas()
         {
             List<SlabPolylineXData> xDatas = new List<SlabPolylineXData>();
@@ -557,17 +513,10 @@ namespace MeshWelderAutocad.Commands.Test
                     string jsonString = value.Value as string;
                     if (!string.IsNullOrEmpty(jsonString))
                     {
-                        try
+                        using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
                         {
-                            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
-                            {
-                                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SlabPolylineXData));
-                                return serializer.ReadObject(ms) as SlabPolylineXData;
-                            }
-                        }
-                        catch (System.Exception ex)
-                        {
-                            throw new System.Exception($"Ошибка при парсинге JSON. Обратитесь к разработчику. {ex.Message} {ex.StackTrace}");
+                            DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SlabPolylineXData));
+                            return serializer.ReadObject(ms) as SlabPolylineXData;
                         }
                     }
                 }
@@ -599,27 +548,6 @@ namespace MeshWelderAutocad.Commands.Test
                 }
             }
             return null;
-        }
-        //private static bool IsSlabLineChangePosition(List<Vertex> points1, List<Vertex> points2)
-        //{
-        //    if (points1.Count != points2.Count)
-        //    {
-        //        return false;
-        //    }
-
-        //    for (int i = 0; i < points1.Count; i++)
-        //    {
-        //        if (!ArePointsEqual(points1[i], points2[i]))
-        //        {
-        //            return false;
-        //        }
-        //    }
-        //    return true;
-        //}
-        private static bool ArePointsEqual(Vertex p1, Vertex p2)
-        {
-            return Math.Round(p1.X, 8) == Math.Round(p2.X, 8) &&
-                   Math.Round(p1.Y, 8) == Math.Round(p2.Y, 8);
         }
 
         private static ObjectId SelectSlabImage()
@@ -761,17 +689,6 @@ namespace MeshWelderAutocad.Commands.Test
             );
             return rb;
         }
-
-        //private static List<Vertex> GetVertexes(Polyline polyline)
-        //{
-        //    List<Point3d> points = new List<Point3d>();
-        //    for (int i = 0; i < polyline.NumberOfVertices; i++)
-        //    {
-        //        points.Add(polyline.GetPoint3dAt(i));
-        //    }
-        //    return points.Select(pt => new Vertex(pt.X, pt.Y)).ToList();
-        //}
-
         internal static List<ObjectId> GetSlabPolylineIds()
         {
             List<ObjectId> slabPolylineIds = new List<ObjectId>();
@@ -790,7 +707,7 @@ namespace MeshWelderAutocad.Commands.Test
                         if (xData != null)
                         {
                             SlabPolylineXData xDataParse = ParseXDataJSON(xData);
-                            if (xDataParse.PlanPolylineGuid != Guid.Empty) //INFO чтобы от полилиний плана инфа не попадала
+                            if (xDataParse.PlanPolylineGuid != Guid.Empty) //INFO чтобы полилиний плана не попадали, у них просто нет такого свойства
                             {
                                 slabPolylineIds.Add(objId);
                             }

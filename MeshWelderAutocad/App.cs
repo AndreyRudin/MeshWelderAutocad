@@ -22,32 +22,53 @@ using RibbonButton = Autodesk.Windows.RibbonButton;
 using RibbonPanelSource = Autodesk.Windows.RibbonPanelSource;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 using MeshWelderAutocad.Commands.Test;
+using System.Security.Cryptography;
 
 namespace MeshWelderAutocad
 {
-    //удаление связанных объектов при удалении одного из них
-    //есть ли у документа hash какой-нибудь
-    //отписки при закрытии документа
-    //ситуация когда человек в одной сессии автокада закрывает и открывает один и тот же документ
-    //предупреждения если пользователь творит хуйню
     public class App : IExtensionApplication
     {
         public const string RibbonTitle = "DNS_Plugins";
         public const string RibbonId = "DNSPluginsId";
-        private static Dictionary<Document, bool> _documentSubscriptions = new Dictionary<Document, bool>();
+        private Dictionary<string, bool> _documentSubscriptions = new Dictionary<string, bool>();
 
         [CommandMethod("InitMeshWelder", CommandFlags.Transparent)]
         public void Init()
         {
             CreateRibbon();
             Application.DocumentManager.DocumentActivated += OnDocumentActivated;
-            Application.DocumentManager.DocumentCreated += OnDocumentActivated;
+            Application.DocumentManager.DocumentToBeDestroyed += OnDocumentToBeDestroyed;
 
-            AddHandleToCommandEnded(); //INFO если вместе с автокадом открывается документ уже, то на него события выше не срабатывают почему-то
-
-            //TODO Если в одной активной сессии человек закроет документ, а потом откроет,
-            //нужно чтобы подписка была осуществлена, т.е при закрытии нужно удалять информацию о подписке из _documentSubscriptions
+            AddHandleToCommandEnded(); //INFO если вместе с автокадом открывается документ уже, то этот метод для него
         }
+
+        private void OnDocumentToBeDestroyed(object sender, DocumentCollectionEventArgs e)
+        {
+            Document closedDoc = e.Document;
+            if (closedDoc != null)
+            {
+                string fingerPrint = closedDoc.Database.FingerprintGuid;
+                if (_documentSubscriptions.ContainsKey(fingerPrint) || _documentSubscriptions[fingerPrint])
+                {
+                    List<ObjectId> slabPolylineIds = Command.GetSlabPolylineIds();
+                    if (slabPolylineIds.Count != 0)
+                    {
+                        using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
+                        {
+                            foreach (var id in slabPolylineIds)
+                            {
+                                tr.GetObject(id, OpenMode.ForWrite).Modified -= Command.OnSlabPolylineModified;
+                            }
+                            tr.Commit();
+                        }
+                    }
+
+                    closedDoc.CommandEnded -= Command.OnCommandEnded;
+                    _documentSubscriptions.Remove(fingerPrint);
+                }
+            }
+        }
+
         private void OnDocumentActivated(object sender, DocumentCollectionEventArgs e)
         {
             AddHandleToCommandEnded();
@@ -57,7 +78,8 @@ namespace MeshWelderAutocad
             Document newActiveDoc = Application.DocumentManager.MdiActiveDocument;
             if (newActiveDoc != null) //INFO переход на стартовый экран, событие сработает, но документа там не будет
             {
-                if (!_documentSubscriptions.ContainsKey(newActiveDoc) || !_documentSubscriptions[newActiveDoc])
+                string fingerPrint = newActiveDoc.Database.FingerprintGuid;
+                if (!_documentSubscriptions.ContainsKey(fingerPrint) || !_documentSubscriptions[fingerPrint])
                 {
                     List<ObjectId> slabPolylineIds = Command.GetSlabPolylineIds();
                     if (slabPolylineIds.Count != 0)
@@ -73,7 +95,7 @@ namespace MeshWelderAutocad
                     }
                         
                     newActiveDoc.CommandEnded += Command.OnCommandEnded;
-                    _documentSubscriptions[newActiveDoc] = true;
+                    _documentSubscriptions[fingerPrint] = true;
                 }
             }
         }
@@ -186,7 +208,8 @@ namespace MeshWelderAutocad
 
         public void Terminate()
         {
-            //TODO отписка от всех событий документов
+            Application.DocumentManager.DocumentActivated -= OnDocumentActivated;
+            Application.DocumentManager.DocumentToBeDestroyed -= OnDocumentToBeDestroyed;
         }
     }
 }
