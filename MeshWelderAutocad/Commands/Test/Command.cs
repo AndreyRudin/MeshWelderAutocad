@@ -173,7 +173,7 @@ namespace MeshWelderAutocad.Commands.Test
             {
                 if (e.GlobalCommandName == "ERASE")
                 {
-                    List<(Guid, DBObject)> elementsWithBaseXData = GetElementsWithBaseXData(); 
+                    //List<(Guid, DBObject)> elementsWithBaseXData = GetElementsWithBaseXData(); 
                     List<SlabPolylineXData> slabPolylinesXDatas = GetXDatas();
                     RemoveObjectsInNotFullSets(GetSetsLinkedElement(slabPolylinesXDatas));
                 }
@@ -216,31 +216,31 @@ namespace MeshWelderAutocad.Commands.Test
             }
         }
 
-        private static List<(Guid, DBObject)> GetElementsWithBaseXData()
-        {
-            List<(Guid, DBObject)> elementsWithBaseXData = new List<(Guid, DBObject)>();
-            using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
-            {
-                BlockTable bt = tr.GetObject(HostApplicationServices.WorkingDatabase.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
+        //private static List<(Guid, DBObject)> GetElementsWithBaseXData()
+        //{
+        //    List<(Guid, DBObject)> elementsWithBaseXData = new List<(Guid, DBObject)>();
+        //    using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
+        //    {
+        //        BlockTable bt = tr.GetObject(HostApplicationServices.WorkingDatabase.BlockTableId, OpenMode.ForRead) as BlockTable;
+        //        BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
 
-                foreach (ObjectId objId in btr)
-                {
-                    DBObject obj = tr.GetObject(objId, OpenMode.ForRead);
-                    if (obj is Polyline polyline)
-                    {
-                        ResultBuffer xData = polyline.GetXDataForApplication(_appName);
-                        if (xData != null)
-                        {
-                            BaseXData xDataParse = ParseBaseXDataJSON(xData);
-                            xDatas.Add(xDataParse);
-                        }
-                    }
-                }
-                tr.Commit();
-            }
-            return xDatas;
-        }
+        //        foreach (ObjectId objId in btr)
+        //        {
+        //            DBObject obj = tr.GetObject(objId, OpenMode.ForRead);
+        //            if (obj is Polyline polyline)
+        //            {
+        //                ResultBuffer xData = polyline.GetXDataForApplication(_appName);
+        //                if (xData != null)
+        //                {
+        //                    BaseXData xDataParse = ParseBaseXDataJSON(xData);
+        //                    xDatas.Add(xDataParse);
+        //                }
+        //            }
+        //        }
+        //        tr.Commit();
+        //    }
+        //    return xDatas;
+        //}
 
         private static void UpdateXData(Polyline slabPolyline, Guid slabPolylineGuid)
         {

@@ -180,21 +180,19 @@ namespace MeshWelderAutocad.Commands.Laser
         {
             double width = 210.0;
             double height = 240.0;
-            if (_panel.EmbeddedParts7.Count != 0)
+            if (_panel.EmbeddedPartsSeven.Count != 0)
             {
                 CreateLayer(_db, layerName);
                 ObjectId layerId = _layerTable[layerName];
-                foreach (var detail7 in _panel.EmbeddedParts7)
+                foreach (var detail7 in _panel.EmbeddedPartsSeven)
                 {
-                    double minX = detail7.X - width / 2.0;
-                    double maxX = detail7.X + width / 2.0;
                     double minY = detail7.Y - height / 2.0;
                     double maxY = detail7.Y + height / 2.0;
 
-                    CreateLine(minX, minY, minX, maxY, layerId);
-                    CreateLine(minX, maxY, maxX, maxY, layerId);
-                    CreateLine(maxX, maxY, maxX, minY, layerId);
-                    CreateLine(maxX, minY, minX, minY, layerId);
+                    CreateLine(detail7.MinX, minY, detail7.MinX, maxY, layerId);
+                    CreateLine(detail7.MinX, maxY, detail7.MaxX, maxY, layerId);
+                    CreateLine(detail7.MaxX, maxY, detail7.MaxX, minY, layerId);
+                    CreateLine(detail7.MaxX, minY, detail7.MinX, minY, layerId);
                 }
             }
         }

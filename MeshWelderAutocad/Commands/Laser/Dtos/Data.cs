@@ -41,7 +41,7 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public List<Pocket> Pockets { get; set; } = new List<Pocket>();
         [DataMember]
-        public List<EmbeddedPart> EmbeddedParts7 { get; set; } = new List<EmbeddedPart>();
+        public List<EmbeddedPart7> EmbeddedPartsSeven { get; set; } = new List<EmbeddedPart7>();
         [DataMember]
         public List<EmbeddedPart> EmbeddedParts5 { get; set; } = new List<EmbeddedPart>();
         public Panel()
@@ -143,6 +143,17 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
             X = x;
             Y = y;
         }
+    }
+    [DataContract]
+    public class EmbeddedPart7
+    {
+        [DataMember]
+        public double Y { get; set; }
+        [DataMember]
+        public double MinX { get; set; }
+        [DataMember]
+        public double MaxX { get; set; }
+        public EmbeddedPart7() { }
     }
     [DataContract]
     public class Pocket
