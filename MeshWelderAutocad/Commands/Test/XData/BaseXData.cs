@@ -13,5 +13,7 @@ namespace MeshWelderAutocad.Commands.Test
     {
         [DataMember]
         public Guid Guid { get; set; }
+        [DataMember]
+        public Guid SlabPolylineGuid { get; set; }
     }
 }

@@ -13,24 +13,25 @@ using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 using MessageBox = System.Windows.MessageBox;
 using Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline;
 
-//не двигать руками картинки слеба
-//!ПРОВЕРИТЬ иожно двигать полинию линию плана вместе с картинкой на плане можно
-//не копировать использующиеся в плагине полилинии плана, слеба или картинки плана или слеба
-//не менять количество вершин и положение вершин по отдельности в полилниях плана или полилиниях слеба
-//не поворачивать никакие объекты уже связанные между собой
+//ОГРАНИЧЕНИЯ ПРИ РАБОТЕ С ПЛАГИНОМ
+//не перемещать картинку плана и полилинию плана в другое место
+//не двигать картинки слеба, если с ними уже связаны полилинии
+//не копировать использующиеся в плагине полилинии плана/слеба или картинки плана/слеба
+//не поворачивать никакие объекты уже использующиеся в плагине
 //не менять количество вершин в обрезке картинки плана
+//не менять количество вершин и положение вершин в полилиниях слеба и в полилиниях плана
 //Не открывать второй раз один и тот же документ
+//При необходимости изменить количество вершин или повернуть полигон требуется удалить старую полилинию плана, построить новую и произвести привязку через плагин 
 
-//нельзя копировать полилинии и картинки с xData, следить за таким и откатывать назад действие
-//нельзя менять количество вершин в полилиниях, следить за таким и откатывать назад действие
+
+//По идее могу как доп сделать предупреждение о том, что пользователь делает что-то из ограниченных действий, но может проще уже вторую часть сделать, которая будет обходить все данные ограничения
+//Наверное как улучшение еще могу не выбирать картинку, а искать ее самому под местом куда полилиния была вставлена
 
 namespace MeshWelderAutocad.Commands.Test
 {
-    //!ругается при выборе прямоугольников
     //!удаление связанных объектов при удалении одного из них
-    //!выделить в отедльное приложение 
+    //!выделить в отдельное приложение
     //!записать видео с работой, перезакрытием документа и несколькими слебами, одновременным движением линий
-    //!предупреждения если пользователь творит хуйню
     internal partial class Command
     {
         public static string _appName = "SlabMaster";
@@ -43,9 +44,6 @@ namespace MeshWelderAutocad.Commands.Test
         [CommandMethod("Test")]
         public static void Test()
         {
-            //Проверить как сейчас работает если поменять количество вершин или повернуть полигон на плане и на слебе?
-            //подписка пропадает при закрытии автокада, нужно подписываться заново при открытии повторном
-            //Проблемы при слежение за всеми объектами сразу, транзакции одновременно открываются что ли? по идее нужно бы подписку хотя бы за линией плана сделать, а в идеале за картинками бы тоже следить
             try
             {
                 Document doc = Application.DocumentManager.MdiActiveDocument;
@@ -100,7 +98,7 @@ namespace MeshWelderAutocad.Commands.Test
             }
             catch (System.Exception exception)
             {
-                MessageBox.Show(exception.Message + exception.StackTrace);
+                MessageBox.Show("Command " + exception.Message + exception.StackTrace);
             }
         }
         /// <summary>
@@ -115,7 +113,7 @@ namespace MeshWelderAutocad.Commands.Test
             ResultBuffer xData = slabImage.GetXDataForApplication(_appName);
             if (xData != null)
             {
-                BaseXData xDataParse = ParseShortXDataJSON(xData);
+                BaseXData xDataParse = ParseBaseXDataJSON(xData);
                 return xDataParse.Guid;
             }
             else
@@ -166,7 +164,7 @@ namespace MeshWelderAutocad.Commands.Test
             }
             catch (System.Exception exception)
             {
-                MessageBox.Show(exception.Message + exception.StackTrace);
+                MessageBox.Show("OnSlabPolylineModified " + exception.Message + exception.StackTrace);
             }
         }
         public static void OnCommandEnded(object sender, CommandEventArgs e)
@@ -175,12 +173,14 @@ namespace MeshWelderAutocad.Commands.Test
             {
                 if (e.GlobalCommandName == "ERASE")
                 {
+                    List<(Guid, DBObject)> elementsWithBaseXData = GetElementsWithBaseXData(); 
                     List<SlabPolylineXData> slabPolylinesXDatas = GetXDatas();
                     RemoveObjectsInNotFullSets(GetSetsLinkedElement(slabPolylinesXDatas));
                 }
 
                 //и если линия была скопирована с xData то уведомить пользователя хотя бы, что так делать низя
                 //картинки тоже нельзя копировать у которых есть xdata
+                //на поворот ругаться полилиний всех и всех картинок
 
                 if (_slabPolylinesNeedToAddModifiedHandle.Count > 0)
                 {
@@ -212,8 +212,34 @@ namespace MeshWelderAutocad.Commands.Test
             }
             catch (System.Exception exception)
             {
-                MessageBox.Show(exception.Message + exception.StackTrace);
+                MessageBox.Show("OnCommandEnded " + exception.Message + exception.StackTrace);
             }
+        }
+
+        private static List<(Guid, DBObject)> GetElementsWithBaseXData()
+        {
+            List<(Guid, DBObject)> elementsWithBaseXData = new List<(Guid, DBObject)>();
+            using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
+            {
+                BlockTable bt = tr.GetObject(HostApplicationServices.WorkingDatabase.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
+
+                foreach (ObjectId objId in btr)
+                {
+                    DBObject obj = tr.GetObject(objId, OpenMode.ForRead);
+                    if (obj is Polyline polyline)
+                    {
+                        ResultBuffer xData = polyline.GetXDataForApplication(_appName);
+                        if (xData != null)
+                        {
+                            BaseXData xDataParse = ParseBaseXDataJSON(xData);
+                            xDatas.Add(xDataParse);
+                        }
+                    }
+                }
+                tr.Commit();
+            }
+            return xDatas;
         }
 
         private static void UpdateXData(Polyline slabPolyline, Guid slabPolylineGuid)
@@ -242,8 +268,8 @@ namespace MeshWelderAutocad.Commands.Test
             }
         }
 
-        private static Polyline CreateSlabPolyline(Polyline planPolyline, 
-            Vector3d displacement,BlockTableRecord btr)
+        private static Polyline CreateSlabPolyline(Polyline planPolyline,
+            Vector3d displacement, BlockTableRecord btr)
         {
             Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.TopTransaction;
             Polyline slabPolyline = planPolyline.Clone() as Polyline;
@@ -404,13 +430,11 @@ namespace MeshWelderAutocad.Commands.Test
                         if (!set.PlanImageId.IsErased && !set.PlanImageId.IsNull)
                         {
                             DBObject planImage = GetDBObjectById(set.PlanImageId, tr);
-                            planImage.Modified -= OnSlabPolylineModified;
                             planImage.Erase();
                         }
                         if (!set.PlanPolylineId.IsErased && !set.PlanPolylineId.IsNull)
                         {
                             DBObject planPolyline = GetDBObjectById(set.PlanPolylineId, tr);
-                            planPolyline.Modified -= OnSlabPolylineModified;
                             planPolyline.Erase();
                         }
                         if (!set.SlabPolylineId.IsErased && !set.SlabPolylineId.IsNull)
@@ -523,7 +547,7 @@ namespace MeshWelderAutocad.Commands.Test
             }
             return null;
         }
-        public static BaseXData ParseShortXDataJSON(ResultBuffer xData) 
+        public static BaseXData ParseBaseXDataJSON(ResultBuffer xData)
         {
             foreach (TypedValue value in xData)
             {
@@ -606,6 +630,8 @@ namespace MeshWelderAutocad.Commands.Test
         }
         private static bool IsPolylineClosed(Polyline polyline)
         {
+            if (polyline.Closed) return true; // INFO прямоугольник
+
             if (polyline == null || polyline.NumberOfVertices < 2)
                 return false;
 
