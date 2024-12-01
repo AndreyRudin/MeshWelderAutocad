@@ -28,10 +28,10 @@ namespace MeshWelderAutocad
         public void Init()
         {
             CreateRibbon();
-            Application.DocumentManager.DocumentActivated += OnDocumentActivated;
-            Application.DocumentManager.DocumentToBeDestroyed += OnDocumentToBeDestroyed;
+            //Application.DocumentManager.DocumentActivated += OnDocumentActivated;
+            //Application.DocumentManager.DocumentToBeDestroyed += OnDocumentToBeDestroyed;
 
-            AddHandleToCommandEnded(); //INFO если вместе с автокадом открывается документ уже, то этот метод для него
+            //AddHandleToCommandEnded(); //INFO если вместе с автокадом открывается документ уже, то этот метод для него
         }
 
         private void OnDocumentToBeDestroyed(object sender, DocumentCollectionEventArgs e)
@@ -187,8 +187,8 @@ namespace MeshWelderAutocad
 
         public void Terminate()
         {
-            Application.DocumentManager.DocumentActivated -= OnDocumentActivated;
-            Application.DocumentManager.DocumentToBeDestroyed -= OnDocumentToBeDestroyed;
+            //Application.DocumentManager.DocumentActivated -= OnDocumentActivated;
+            //Application.DocumentManager.DocumentToBeDestroyed -= OnDocumentToBeDestroyed;
         }
     }
 }
