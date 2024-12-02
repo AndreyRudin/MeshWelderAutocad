@@ -2,7 +2,6 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.Windows;
-using MeshWelderAutocad.Commands.Test;
 using MeshWelderAutocad.Properties;
 using System;
 using System.Collections.Generic;
@@ -22,76 +21,12 @@ namespace MeshWelderAutocad
     {
         public const string RibbonTitle = "DNS_Plugins";
         public const string RibbonId = "DNSPluginsId";
-        private Dictionary<string, bool> _documentSubscriptions = new Dictionary<string, bool>();
 
         [CommandMethod("InitMeshWelder", CommandFlags.Transparent)]
         public void Init()
         {
             CreateRibbon();
-            //Application.DocumentManager.DocumentActivated += OnDocumentActivated;
-            //Application.DocumentManager.DocumentToBeDestroyed += OnDocumentToBeDestroyed;
-
-            //AddHandleToCommandEnded(); //INFO если вместе с автокадом открывается документ уже, то этот метод для него
         }
-
-        private void OnDocumentToBeDestroyed(object sender, DocumentCollectionEventArgs e)
-        {
-            Document closedDoc = e.Document;
-            if (closedDoc != null)
-            {
-                string fingerPrint = closedDoc.Database.FingerprintGuid;
-                if (_documentSubscriptions.ContainsKey(fingerPrint) || _documentSubscriptions[fingerPrint])
-                {
-                    List<ObjectId> slabPolylineIds = Command.GetSlabPolylineIds();
-                    if (slabPolylineIds.Count != 0)
-                    {
-                        using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
-                        {
-                            foreach (var id in slabPolylineIds)
-                            {
-                                tr.GetObject(id, OpenMode.ForWrite).Modified -= Command.OnSlabPolylineModified;
-                            }
-                            tr.Commit();
-                        }
-                    }
-
-                    closedDoc.CommandEnded -= Command.OnCommandEnded;
-                    _documentSubscriptions.Remove(fingerPrint);
-                }
-            }
-        }
-
-        private void OnDocumentActivated(object sender, DocumentCollectionEventArgs e)
-        {
-            AddHandleToCommandEnded();
-        }
-        private void AddHandleToCommandEnded()
-        {
-            Document newActiveDoc = Application.DocumentManager.MdiActiveDocument;
-            if (newActiveDoc != null) //INFO переход на стартовый экран, событие сработает, но документа там не будет
-            {
-                string fingerPrint = newActiveDoc.Database.FingerprintGuid;
-                if (!_documentSubscriptions.ContainsKey(fingerPrint) || !_documentSubscriptions[fingerPrint])
-                {
-                    List<ObjectId> slabPolylineIds = Command.GetSlabPolylineIds();
-                    if (slabPolylineIds.Count != 0)
-                    {
-                        using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
-                        {
-                            foreach (var id in slabPolylineIds)
-                            {
-                                tr.GetObject(id, OpenMode.ForWrite).Modified += Command.OnSlabPolylineModified;
-                            }
-                            tr.Commit();
-                        }
-                    }
-                        
-                    newActiveDoc.CommandEnded += Command.OnCommandEnded;
-                    _documentSubscriptions[fingerPrint] = true;
-                }
-            }
-        }
-
         private void CreateRibbon()
         {
             RibbonControl ribbon = ComponentManager.Ribbon;
@@ -151,19 +86,6 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
                 CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
             };
-            //RibbonButton btnTest = new RibbonButton
-            //{
-            //    Orientation = Orientation.Vertical,
-            //    AllowInStatusBar = true,
-            //    Size = RibbonItemSize.Large,
-            //    Text = "Тест",
-            //    ShowText = true,
-            //    ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
-            //    Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
-            //    LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
-            //    CommandHandler = new RelayCommand((_) => Commands.Test.Command.Test(), (_) => true)
-            //};
-            //rps.Items.Add(btnTest);
 
             rps.Items.Add(btnMeshWelder);
             rps.Items.Add(btnLaser);
@@ -187,8 +109,7 @@ namespace MeshWelderAutocad
 
         public void Terminate()
         {
-            //Application.DocumentManager.DocumentActivated -= OnDocumentActivated;
-            //Application.DocumentManager.DocumentToBeDestroyed -= OnDocumentToBeDestroyed;
+
         }
     }
 }

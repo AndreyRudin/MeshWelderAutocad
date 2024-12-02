@@ -68,11 +68,11 @@ namespace MeshWelderAutocad.Commands.Laser
                             CreateAnchors("5. Анкера");
                             tr.Commit();
                         }
-                        //newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
+                        newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
                     }
-                    //newDoc.CloseAndDiscard();
+                    newDoc.CloseAndDiscard();
                 }
-                //File.Delete(jsonFilePath);
+                File.Delete(jsonFilePath);
             }
             catch (CustomException e)
             {
@@ -155,8 +155,8 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static void CreatePockets(string layerName)
         {
-            double width = 165.0;
-            double height = 150.0;
+            double width = 150.0;
+            double height = 165.0;
             if (_panel.Pockets.Count != 0)
             {
                 CreateLayer(_db, layerName);
