@@ -254,10 +254,12 @@ namespace MeshWelderAutocad.Commands.Laser
                 ObjectId layerId = _layerTable[layerName];
                 foreach (var detail5 in _panel.EmbeddedParts5)
                 {
-                    double maxY = detail5.Y + _heightDetail5 / 2.0;
-                    double minY = detail5.Y - _heightDetail5 / 2.0;
-                    double minX = detail5.X - _widthDetail5 / 2.0;
-                    double maxX = detail5.X + _widthDetail5 / 2.0;
+                    double width = detail5.IsVertical ? _heightDetail5 : _widthDetail5;
+                    double height = detail5.IsVertical ? _widthDetail5 : _heightDetail5;
+                    double maxY = detail5.Y + height / 2.0;
+                    double minY = detail5.Y - height / 2.0;
+                    double minX = detail5.X - width / 2.0;
+                    double maxX = detail5.X + width / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(minX, maxY, maxX, maxY, layerId);
                     CreateLine(maxX, maxY, maxX, minY, layerId);

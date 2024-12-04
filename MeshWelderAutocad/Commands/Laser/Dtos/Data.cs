@@ -139,12 +139,12 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         public double Y { get; set; }
         [DataMember]
         public double X { get; set; }
+        [DataMember]
+        /// <summary>
+        /// Актуально только для ЗД-5, 9 и 11 всегда горизонтальные и всегда наверху панели, 6 всегда горизонтальые, 7 всегда вертикальные
+        /// </summary>
+        public bool IsVertical { get; set; }
         public EmbeddedPart() { }
-        public EmbeddedPart(double x, double y = 0)
-        {
-            X = x;
-            Y = y;
-        }
     }
     [DataContract]
     public class EmbeddedPart7
