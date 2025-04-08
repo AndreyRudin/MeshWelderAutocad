@@ -128,7 +128,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
 
         public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)
         {
-            RebarDiameterColor rebarDiameterColor = Settings.RebarDiameterColors.First(rbc => rbc.Diameter == diameter);
+            RebarDiameterColor rebarDiameterColor = Settings.RebarDiameterColors.FirstOrDefault(rbc => rbc.Diameter == diameter);
             if (rebarDiameterColor == null)
             {
                 MissingDiameter.Add(diameter);
