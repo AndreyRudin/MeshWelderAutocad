@@ -110,6 +110,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
 
         public static Color GetColor(double diameter)
         {
+
             switch (diameter)
             {
                 case 6.0:
