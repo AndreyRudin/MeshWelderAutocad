@@ -3,13 +3,16 @@ using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
+using MeshWelderAutocad.Commands.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Windows;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
+using Color = MeshWelderAutocad.Commands.Settings.Color;
 using Line = Autodesk.AutoCAD.DatabaseServices.Line;
 using Path = System.IO.Path;
 
@@ -17,6 +20,8 @@ namespace MeshWelderAutocad.Commands.MeshWelder
 {
     internal class Command
     {
+        public static SettingStorage Settings { get; set; }
+        public static List<double> MissingDiameter { get; set; }
         [CommandMethod("CreateMesh")]
         public static void CreateMesh()
         {
@@ -24,6 +29,9 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
 
             //Вызов команды из вкладки доступен даже если нету открытого чертежа
+
+            MissingDiameter = new List<double>();
+            Settings = ReadSettings();
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
             openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
@@ -105,27 +113,50 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 }
                 newDoc.CloseAndDiscard();
             }
-            File.Delete(jsonFilePath);
+            //File.Delete(jsonFilePath);
+            if (MissingDiameter.Count != 0)
+            {
+                //показать окно что диаметр не найден в настроках не тут его показать, а в самом конце одним окном
+            }
         }
 
-        public static Color GetColor(double diameter)
+        private static SettingStorage ReadSettings()
         {
-            switch (diameter)
+            //считать настройка с файла, если есть, если нет, то дефолтные принять
+            return new SettingStorage();
+        }
+
+        public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)
+        {
+            RebarDiameterColor rebarDiameterColor = Settings.RebarDiameterColors.First(rbc => rbc.Diameter == diameter);
+            if (rebarDiameterColor == null)
             {
-                case 6.0:
-                    return Color.FromRgb(255, 0, 0);
-                case 8.0:
-                    return Color.FromRgb(255, 255, 0);
-                case 10.0:
-                    return Color.FromRgb(0, 128, 0);
-                case 12.0:
-                    return Color.FromRgb(0, 255, 255);
-                case 28.0:
-                    return Color.FromRgb(0, 255, 0);
-                default:
-                    MessageBox.Show($"Обнаружен неизвестный диаметр: {diameter}. Принят цвет по умолчанию RGB(128,128,128)");
-                    return Color.FromRgb(128, 128, 128);
+                MissingDiameter.Add(diameter);
+                return Autodesk.AutoCAD.Colors.Color.FromRgb(128, 128, 128);
             }
+            else
+            {
+                Color color = rebarDiameterColor.Color;
+                return Autodesk.AutoCAD.Colors.Color.FromRgb(color.Red, color.Green, color.Blue);
+            }
+
+            //switch (diameter)
+            //{
+            //    case 6.0:
+            //        //вместо этого цвета, взять цвет из настроек по данному диаметру
+            //        return Color.FromRgb(255, 0, 0);
+            //    case 8.0:
+            //        return Color.FromRgb(255, 255, 0);
+            //    case 10.0:
+            //        return Color.FromRgb(0, 128, 0);
+            //    case 12.0:
+            //        return Color.FromRgb(0, 255, 255);
+            //    case 28.0:
+            //        return Color.FromRgb(0, 255, 0);
+            //    default:
+            //        MessageBox.Show($"Обнаружен неизвестный диаметр: {diameter}. Принят цвет по умолчанию RGB(128,128,128)");
+            //        return Color.FromRgb(128, 128, 128);
+            //}
         }
 
         public static void CreateLayer(Database db, string name)

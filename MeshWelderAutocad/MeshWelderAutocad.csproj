@@ -96,6 +96,13 @@
     <Compile Include="Commands\Laser\Dtos\Data.cs" />
     <Compile Include="Commands\MeshWelder\Command.cs" />
     <Compile Include="App.cs" />
+    <Compile Include="Commands\Settings\Models\Color.cs" />
+    <Compile Include="Commands\Settings\Command.cs" />
+    <Compile Include="Commands\Settings\Models\RebarDiameterColor.cs" />
+    <Compile Include="Commands\Settings\Models\SettingStorage.cs" />
+    <Compile Include="Commands\Settings\View.xaml.cs">
+      <DependentUpon>View.xaml</DependentUpon>
+    </Compile>
     <Compile Include="lsp\Info.cs" />
     <Compile Include="Commands\MeshWelder\Dtos\Point.cs" />
     <Compile Include="Commands\MeshWelder\Dtos\MyRebar.cs" />
@@ -126,7 +133,12 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Page Include="Commands\Settings\View.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>XCOPY /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\MeshWelder.bundle\Content\"</PostBuildEvent>
