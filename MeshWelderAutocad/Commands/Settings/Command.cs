@@ -16,12 +16,13 @@ namespace MeshWelderAutocad.Commands.Settings
             //считать файл json с настройками
             Settings = ReadSettings();
             //открыть окно с биндингом на эти настройки
+            // или .Show()
             //заменить файл с настройками на новые через JSON из свойства Settings
         }
 
         private static SettingStorage ReadSettings()
         {
-            //если файл есть, то принять его, если нет, то создать дефолтные настройка
+            //если файл есть, то принять его, если нет, то создать дефолтные настройки
             return new SettingStorage();
         }
     }
