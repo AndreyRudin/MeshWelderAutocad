@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Autodesk.AutoCAD.GraphicsSystem;
 using MeshWelderAutocad.WPF;
-using MeshWelderAutocad.Commands.Settings.Models;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Xml;
 using Newtonsoft.Json;
+using System.ServiceModel.Channels;
 namespace MeshWelderAutocad.Commands.Settings
 {
     internal partial class ViewModel : BaseViewModel
@@ -18,52 +18,62 @@ namespace MeshWelderAutocad.Commands.Settings
                          "Autodesk",
                          "Revit",
                          "Addins",
-                         "SummaryScheduleSetting.cfg");
-        public Model Model { get; set; }
+                         "MesgWelderDiameters.cfg");
         public View View { get; set; }
 
-        private ObservableCollection<Reserve> _reserves = new ObservableCollection<Reserve>();
-        public ObservableCollection<Reserve> Reserves
+        private ObservableCollection<RebarDiameterColor> _rebarDiameterColors = new ObservableCollection<RebarDiameterColor>();
+        public ObservableCollection<RebarDiameterColor> RebarDiameterColors
         {
-            get => _reserves;
+            get => _rebarDiameterColors;
             set
             {
-                if (_reserves != value)
-                {
-                    _reserves = value;
-                    OnPropertyChanged(nameof(Reserves));
-                }
+                _rebarDiameterColors = value;
+                OnPropertyChanged(nameof(RebarDiameterColors));
+            }
+        }
+        private RebarDiameterColor _selectedRebarDiameterColors;
+        public RebarDiameterColor SelectedRebarDiameterColors
+        {
+            get => _selectedRebarDiameterColors;
+            set
+            {
+                _selectedRebarDiameterColors = value;
+                OnPropertyChanged(nameof(SelectedRebarDiameterColors));
             }
         }
 
         public ViewModel()
         {
-            Model = new Model();
-            AddRowReserveCommand = new LambdaCommand(AddRowReserve(),
+            RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(ReadSettings().RebarDiameterColors);
+
+            AddRowDiameterColorCommand = new LambdaCommand(AddRowReserve(),
                 _ => true);
-            DeleteRowReserveCommand = new LambdaCommand(DeleteRowReserve(),
-                _ => Reserves.Count > 1);
+            DeleteRowDiameterColorCommand = new LambdaCommand(DeleteRowReserve(),
+                _ => RebarDiameterColors.Count > 1);
             CancelCommand = new LambdaCommand(Cancel(),
                 _ => true);
             SaveCommand = new LambdaCommand(Save(),
-                _ => Reserves?.Count > 0);
+                _ => true);
+
             View = new View() { DataContext = this };
         }
-        private void SaveSettings()
+        private SettingStorage ReadSettings()
         {
-            SettingStorage settings = new SettingStorage()
-            {
-                Presets = Presets.ToList(),
-                Reserves = Reserves.ToList(),
-            };
+            if (!File.Exists(_defaultSettingPath))
+                return new SettingStorage();
 
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+            try
             {
-                Formatting = Formatting.Indented
-            };
-
-            string jsonString = JsonConvert.SerializeObject(settings, jsonSettings);
-            File.WriteAllText(_defaultSettingPath, jsonString);
+                string jsonString = File.ReadAllText(_defaultSettingPath);
+                SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
+                return settings;
+            }
+            catch (Exception ex)
+            {
+                //чтение настроек произошло с ошибкой, приняты настройки по умолчанию
+                MessageBox
+            }
+            return new SettingStorage();
         }
     }
 }

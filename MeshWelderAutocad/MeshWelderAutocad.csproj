@@ -108,7 +108,6 @@
     <Compile Include="Commands\Settings\Models\Color.cs" />
     <Compile Include="Commands\Settings\Command.cs" />
     <Compile Include="Commands\Settings\Models\RebarDiameterColor.cs" />
-    <Compile Include="Commands\Settings\Models\Reserve.cs" />
     <Compile Include="Commands\Settings\Models\SettingStorage.cs" />
     <Compile Include="Commands\Settings\View.xaml.cs">
       <DependentUpon>View.xaml</DependentUpon>

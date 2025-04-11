@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,28 +8,17 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Xml;
-using MeshWelderAutocad.Commands.Settings.Models;
+using Formatting = Newtonsoft.Json.Formatting;
 
 namespace MeshWelderAutocad.Commands.Settings
 {
     internal partial class ViewModel
     {
-        public ICommand AddRowReserveCommand { get; }
-        public ICommand DeleteRowReserveCommand { get; }
+        public ICommand AddRowDiameterColorCommand { get; }
+        public ICommand DeleteRowDiameterColorCommand { get; }
         public ICommand CancelCommand { get; }
-
         public ICommand SaveCommand { get; }
 
-        private Reserve _selectedReserve;
-        public Reserve SelectedReserve
-        {
-            get => _selectedReserve;
-            set
-            {
-                _selectedReserve = value;
-                OnPropertyChanged(nameof(SelectedReserve));
-            }
-        }
         private Action<object> AddRowReserve()
         {
             return _ =>
@@ -66,7 +56,18 @@ namespace MeshWelderAutocad.Commands.Settings
         {
             return _ =>
             {
-                SaveSettings();
+                SettingStorage settings = new SettingStorage()
+                {
+                    RebarDiameterColors = this.RebarDiameterColors.ToList()
+                };
+
+                JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented
+                };
+
+                string jsonString = JsonConvert.SerializeObject(settings, jsonSettings);
+                File.WriteAllText(_defaultSettingPath, jsonString);
             };
         }
     }

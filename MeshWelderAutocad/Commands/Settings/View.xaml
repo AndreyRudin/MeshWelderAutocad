@@ -97,24 +97,24 @@
                        FontWeight="Bold"
                        HorizontalAlignment="Center"
                        Style="{StaticResource TextBlockStyle}"/>
-            <TextBlock Text="R"
+            <TextBlock Text="Red"
                        Grid.Column="1"
                        FontWeight="Bold"
                        HorizontalAlignment="Center"
                        Style="{StaticResource TextBlockStyle}"/>
-            <TextBlock Text="G"
+            <TextBlock Text="Green"
                        Grid.Column="2"
                        FontWeight="Bold"
                        HorizontalAlignment="Center"
                        Style="{StaticResource TextBlockStyle}"/>
-            <TextBlock Text="B"
+            <TextBlock Text="Blue"
                        Grid.Column="3"
                        FontWeight="Bold"
                        HorizontalAlignment="Center"
                        Style="{StaticResource TextBlockStyle}"/>
         </Grid>
-        <ListView ItemsSource="{Binding Reserves}"
-                  SelectedItem="{Binding SelectedReserve}"
+        <ListView ItemsSource="{Binding RebarDiameterColors}"
+                  SelectedItem="{Binding SelectedRebarDiameterColors}"
                   SelectionMode="Single">
             <ListView.ItemTemplate> 
                 <DataTemplate>
@@ -129,19 +129,19 @@
                         <TextBox Text="{Binding Diameter, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Margin="0" />
-                        <TextBox Text="{Binding Red, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding Color.Red, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="1"
                                  Margin="0" />
-                        <TextBox Text="{Binding Green, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding Color.Green, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="2"
                                  Margin="0" />
-                        <TextBox Text="{Binding Blue, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding Color.Blue, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="3"
                                  Margin="0" />
-                        <Button Command="{Binding DataContext.DeleteRowReserveCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                        <Button Command="{Binding DataContext.DeleteRowDiameterColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Style="{StaticResource ButtonIconStyle}"
                                 CommandParameter="{Binding}"
                                 Grid.Column="4">

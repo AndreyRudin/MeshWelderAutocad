@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using MeshWelderAutocad.Commands.Settings;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,6 +21,11 @@ namespace MeshWelderAutocad.Commands.MeshWelder
 {
     internal class Command
     {
+        private static readonly string _defaultSettingPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                 "Autodesk",
+                 "Revit",
+                 "Addins",
+                 "MesgWelderDiameters.cfg");
         public static SettingStorage Settings { get; set; }
         public static List<double> MissingDiameter { get; set; }
         [CommandMethod("CreateMesh")]
@@ -122,7 +128,20 @@ namespace MeshWelderAutocad.Commands.MeshWelder
 
         private static SettingStorage ReadSettings()
         {
-            //считать настройка с файла, если есть, если нет, то дефолтные принять
+            if (!File.Exists(_defaultSettingPath))
+                return new SettingStorage();
+
+            try
+            {
+                string jsonString = File.ReadAllText(_defaultSettingPath);
+                SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
+                return settings;
+            }
+            catch (System.Exception ex)
+            {
+                //чтение настроек произошло с ошибкой, приняты настройки по умолчанию
+                MessageBox.Show()
+            }
             return new SettingStorage();
         }
 
@@ -139,24 +158,6 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 Color color = rebarDiameterColor.Color;
                 return Autodesk.AutoCAD.Colors.Color.FromRgb(color.Red, color.Green, color.Blue);
             }
-
-            //switch (diameter)
-            //{
-            //    case 6.0:
-            //        //вместо этого цвета, взять цвет из настроек по данному диаметру
-            //        return Color.FromRgb(255, 0, 0);
-            //    case 8.0:
-            //        return Color.FromRgb(255, 255, 0);
-            //    case 10.0:
-            //        return Color.FromRgb(0, 128, 0);
-            //    case 12.0:
-            //        return Color.FromRgb(0, 255, 255);
-            //    case 28.0:
-            //        return Color.FromRgb(0, 255, 0);
-            //    default:
-            //        MessageBox.Show($"Обнаружен неизвестный диаметр: {diameter}. Принят цвет по умолчанию RGB(128,128,128)");
-            //        return Color.FromRgb(128, 128, 128);
-            //}
         }
 
         public static void CreateLayer(Database db, string name)
