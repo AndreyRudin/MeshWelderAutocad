@@ -11,6 +11,10 @@ namespace MeshWelderAutocad.Commands.Settings
     {
         public double Diameter { get; set; } = 10;
         public Color Color { get; set; } = new Color();
+        public RebarDiameterColor()
+        {
+
+        }
         public RebarDiameterColor(double diameter, byte red, byte green, byte blue)
         {
             Diameter = diameter;

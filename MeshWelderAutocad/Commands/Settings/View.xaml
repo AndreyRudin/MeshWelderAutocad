@@ -75,7 +75,7 @@
         </Style>
     </Window.Resources>
     <StackPanel>
-        <Button Command="{Binding AddRowReserveCommand}"
+        <Button Command="{Binding AddRowDiameterColorCommand}"
                 Style="{StaticResource ButtonIconStyle}"
                 HorizontalAlignment="Left">
             <Button.Content>

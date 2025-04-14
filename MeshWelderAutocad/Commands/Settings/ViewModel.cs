@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Autodesk.AutoCAD.GraphicsSystem;
 using MeshWelderAutocad.WPF;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Xml;
 using Newtonsoft.Json;
-using System.ServiceModel.Channels;
+using System.Windows;
 namespace MeshWelderAutocad.Commands.Settings
 {
     internal partial class ViewModel : BaseViewModel
@@ -18,7 +12,7 @@ namespace MeshWelderAutocad.Commands.Settings
                          "Autodesk",
                          "Revit",
                          "Addins",
-                         "MesgWelderDiameters.cfg");
+                         "MeshWelderDiameters.cfg");
         public View View { get; set; }
 
         private ObservableCollection<RebarDiameterColor> _rebarDiameterColors = new ObservableCollection<RebarDiameterColor>();
@@ -46,9 +40,9 @@ namespace MeshWelderAutocad.Commands.Settings
         {
             RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(ReadSettings().RebarDiameterColors);
 
-            AddRowDiameterColorCommand = new LambdaCommand(AddRowReserve(),
+            AddRowDiameterColorCommand = new LambdaCommand(AddRowDiameterColor(),
                 _ => true);
-            DeleteRowDiameterColorCommand = new LambdaCommand(DeleteRowReserve(),
+            DeleteRowDiameterColorCommand = new LambdaCommand(DeleteRowDiameterColor(),
                 _ => RebarDiameterColors.Count > 1);
             CancelCommand = new LambdaCommand(Cancel(),
                 _ => true);
@@ -70,8 +64,7 @@ namespace MeshWelderAutocad.Commands.Settings
             }
             catch (Exception ex)
             {
-                //чтение настроек произошло с ошибкой, приняты настройки по умолчанию
-                MessageBox
+                MessageBox.Show("Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
             return new SettingStorage();
         }

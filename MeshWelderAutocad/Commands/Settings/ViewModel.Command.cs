@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,28 +20,28 @@ namespace MeshWelderAutocad.Commands.Settings
         public ICommand CancelCommand { get; }
         public ICommand SaveCommand { get; }
 
-        private Action<object> AddRowReserve()
+        private Action<object> AddRowDiameterColor()
         {
             return _ =>
             {
-                if (SelectedReserve == null)
+                if (SelectedRebarDiameterColors == null)
                 {
-                    Reserves.Add(new Reserve());
+                    RebarDiameterColors.Add(new RebarDiameterColor());
                 }
                 else
                 {
-                    int indexSelectedReserve = Reserves.IndexOf(SelectedReserve);
-                    Reserves.Insert(indexSelectedReserve + 1, new Reserve());
+                    int indexDiameterColors = RebarDiameterColors.IndexOf(SelectedRebarDiameterColors);
+                    RebarDiameterColors.Insert(indexDiameterColors + 1, new RebarDiameterColor());
                 }
             };
         }
 
-        private Action<object> DeleteRowReserve()
+        private Action<object> DeleteRowDiameterColor()
         {
             return (object parameter) =>
             {
-                if (parameter is Reserve reserve)
-                    Reserves.Remove(reserve);
+                if (parameter is RebarDiameterColor rebarDiameterColor)
+                    RebarDiameterColors.Remove(rebarDiameterColor);
             };
         }
 

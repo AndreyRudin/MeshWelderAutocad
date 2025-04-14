@@ -139,12 +139,11 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             }
             catch (System.Exception ex)
             {
-                //чтение настроек произошло с ошибкой, приняты настройки по умолчанию
-                MessageBox.Show()
+                MessageBox.Show("Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
             return new SettingStorage();
         }
-
+        
         public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)
         {
             RebarDiameterColor rebarDiameterColor = Settings.RebarDiameterColors.FirstOrDefault(rbc => rbc.Diameter == diameter);
@@ -159,7 +158,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 return Autodesk.AutoCAD.Colors.Color.FromRgb(color.Red, color.Green, color.Blue);
             }
         }
-
+        
         public static void CreateLayer(Database db, string name)
         {
             using (Transaction tr = db.TransactionManager.StartTransaction())
