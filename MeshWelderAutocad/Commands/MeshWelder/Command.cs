@@ -139,7 +139,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             }
             catch (System.Exception ex)
             {
-                MessageBox.Show("Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
+                MessageBox.Show(ex.Message + ex.StackTrace, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
             return new SettingStorage();
         }
