@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using Newtonsoft.Json;
 using System.Windows;
+using System.Windows.Input;
 namespace MeshWelderAutocad.Commands.Settings
 {
     internal partial class ViewModel : BaseViewModel
@@ -46,8 +47,12 @@ namespace MeshWelderAutocad.Commands.Settings
                 _ => RebarDiameterColors.Count > 1);
             CancelCommand = new LambdaCommand(Cancel(),
                 _ => true);
-            SaveCommand = new LambdaCommand(Save(),
-                _ => true);
+            SaveCommand = new LambdaCommand(SaveSettings(), CanSave);
+
+            RebarDiameterColors.CollectionChanged += (s, e) =>
+            {
+                CommandManager.InvalidateRequerySuggested();
+            };
 
             View = new View() { DataContext = this };
         }

@@ -138,8 +138,8 @@
     <Content Include="ForInstaller\MeshWelder.bundle\Content\MeshWelderAutocad.dll" />
     <Content Include="ForInstaller\MeshWelder.bundle\PackageContents.xml" />
     <Content Include="Installer.iss" />
-    <Content Include="Resources\ButtonIcons\addIcon.png" />
-    <Content Include="Resources\ButtonIcons\deleteIcon.png" />
+    <Resource Include="Resources\ButtonIcons\addIcon.png" />
+    <Resource Include="Resources\ButtonIcons\deleteIcon.png" />
     <None Include="Resources\dev32x32.png" />
     <None Include="Resources\dev16x16.png" />
   </ItemGroup>

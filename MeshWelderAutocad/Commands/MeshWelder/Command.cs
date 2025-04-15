@@ -25,7 +25,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                  "Autodesk",
                  "Revit",
                  "Addins",
-                 "MesgWelderDiameters.cfg");
+                 "MeshWelderDiameters.cfg");
         public static SettingStorage Settings { get; set; }
         public static List<double> MissingDiameter { get; set; }
         [CommandMethod("CreateMesh")]
@@ -122,28 +122,42 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             //File.Delete(jsonFilePath);
             if (MissingDiameter.Count != 0)
             {
-                //показать окно что диаметр не найден в настроках не тут его показать, а в самом конце одним окном
+                string missingDiameter = string.Join(", ", MissingDiameter);
+                MessageBox.Show($"Данные диаметры: {missingDiameter} не найдены в файле настроек, для них принят цвет по умолчанию", "Warning");
             }
         }
-
+        
         private static SettingStorage ReadSettings()
         {
             if (!File.Exists(_defaultSettingPath))
-                return new SettingStorage();
-
+            {
+                var defaultSettings = SettingStorage.CreateDefaultSettings();
+                SaveDefaultSettings(defaultSettings);
+                return defaultSettings;
+            }
             try
             {
                 string jsonString = File.ReadAllText(_defaultSettingPath);
                 SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
-                return settings;
+                return settings ?? SettingStorage.CreateDefaultSettings();
             }
             catch (System.Exception ex)
             {
-                MessageBox.Show(ex.Message + ex.StackTrace, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
+                MessageBox.Show(ex.Message, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
-            return new SettingStorage();
+            return SettingStorage.CreateDefaultSettings();
         }
-        
+        private static void SaveDefaultSettings(SettingStorage settings)
+        {
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented
+            };
+
+            string jsonString = JsonConvert.SerializeObject(settings, jsonSettings);
+            File.WriteAllText(_defaultSettingPath, jsonString);
+        }
+
         public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)
         {
             RebarDiameterColor rebarDiameterColor = Settings.RebarDiameterColors.FirstOrDefault(rbc => rbc.Diameter == diameter);

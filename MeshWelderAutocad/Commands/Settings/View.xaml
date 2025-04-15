@@ -4,8 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MeshWelderAutocad.Commands.Settings"
-             mc:Ignorable="d" 
-             d:DesignHeight="200" d:DesignWidth="255">
+             mc:Ignorable="d"
+             WindowStartupLocation="CenterScreen"
+             Width="290"
+             Height="463"
+             ResizeMode="NoResize">
     <Window.Resources>
         <Style x:Key="ComboBoxStyle"
            TargetType="ComboBox">
@@ -77,11 +80,12 @@
     <StackPanel>
         <Button Command="{Binding AddRowDiameterColorCommand}"
                 Style="{StaticResource ButtonIconStyle}"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                Margin="5 5 0 0">
             <Button.Content>
-                <Image Source="../../Resources/ButtonIcons/addIcon.png"
-                   Width="20"
-                   Height="20" />
+                <Image Source="pack://application:,,,/MeshWelderAutocad;component/Resources/ButtonIcons/addIcon.png"
+                       Width="20"
+                       Height="20" />
             </Button.Content>
         </Button>
 
@@ -113,6 +117,9 @@
                        HorizontalAlignment="Center"
                        Style="{StaticResource TextBlockStyle}"/>
         </Grid>
+        <ScrollViewer Height="325"
+                      VerticalScrollBarVisibility="Auto"
+                      PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
         <ListView ItemsSource="{Binding RebarDiameterColors}"
                   SelectedItem="{Binding SelectedRebarDiameterColors}"
                   SelectionMode="Single">
@@ -124,7 +131,7 @@
                             <ColumnDefinition Width="50" />
                             <ColumnDefinition Width="50" />
                             <ColumnDefinition Width="50" />
-                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="40" />
                         </Grid.ColumnDefinitions>
                         <TextBox Text="{Binding Diameter, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
@@ -146,16 +153,17 @@
                                 CommandParameter="{Binding}"
                                 Grid.Column="4">
                             <Button.Content>
-                                <Image Source="../../Resources/ButtonIcons/deleteIcon.png"
-                                       Width="20"
-                                       Height="20" />
+                                    <Image Source="pack://application:,,,/MeshWelderAutocad;component/Resources/ButtonIcons/deleteIcon.png"
+                                           Width="20"
+                                           Height="20" />
                             </Button.Content>
                         </Button>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <StackPanel Margin="0,10,0,0"
+    </ScrollViewer>
+        <StackPanel Margin="0,10,5,0"
                     HorizontalAlignment="Right"
                     Orientation="Horizontal">
             <Button Style="{StaticResource ButtonStyle}"

@@ -52,8 +52,18 @@ namespace MeshWelderAutocad.Commands.Settings
                 View.Close();
             };
         }
+        private bool CanSave(object parameter)
+        {
+            bool isValidColor = RebarDiameterColors
+                .All(r => r.Color.Red <= 255 &&
+                     r.Color.Green <= 255 &&
+                     r.Color.Blue <= 255);
+            bool areDiametersUnique = RebarDiameterColors.Select(r => r.Diameter).Distinct().Count() == RebarDiameterColors.Count;
 
-        private Action<object> Save()
+            return isValidColor && areDiametersUnique;
+        }
+
+        private Action<object> SaveSettings()
         {
             return _ =>
             {
@@ -69,6 +79,7 @@ namespace MeshWelderAutocad.Commands.Settings
 
                 string jsonString = JsonConvert.SerializeObject(settings, jsonSettings);
                 File.WriteAllText(_defaultSettingPath, jsonString);
+                View.Close();
             };
         }
     }

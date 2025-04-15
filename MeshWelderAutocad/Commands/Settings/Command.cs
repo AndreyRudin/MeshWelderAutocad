@@ -25,7 +25,7 @@ namespace MeshWelderAutocad.Commands.Settings
             }
             catch(System.Exception e)
             {
-                MessageBox.Show(e.Message + e.StackTrace,"Системная ошибка");
+                MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
             }
         }
     }
