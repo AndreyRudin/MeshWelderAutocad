@@ -25,5 +25,24 @@ namespace MeshWelderAutocad.Commands.Settings
                 e.Handled = true;
             }
         }
+
+        private void ColorTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !int.TryParse(e.Text, out _);
+        }
+
+        private void ColorTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (int.TryParse(textBox.Text, out int value))
+            {
+                if (value < 0 || value > 255)
+                {
+                    MessageBox.Show("Введите значение от 0 до 255");
+                    textBox.Text = "255";
+                    textBox.SelectionStart = textBox.Text.Length;
+                }
+            }
+        }
     }
 }
