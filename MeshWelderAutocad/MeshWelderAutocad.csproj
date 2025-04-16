@@ -125,6 +125,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="RelayCommand.cs" />
+    <Compile Include="Resource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
     <Compile Include="Utils\CustomException.cs" />
     <Compile Include="WPF\BaseViewModel.cs" />
     <Compile Include="WPF\Command.cs" />
@@ -138,6 +143,11 @@
     <Content Include="ForInstaller\MeshWelder.bundle\Content\MeshWelderAutocad.dll" />
     <Content Include="ForInstaller\MeshWelder.bundle\PackageContents.xml" />
     <Content Include="Installer.iss" />
+    <Content Include="Resources\EVG_16x16.png" />
+    <Content Include="Resources\EVG_32x32.png" />
+    <Content Include="Resources\Laser_16x16.png" />
+    <Content Include="Resources\Laser_32x32.png" />
+    <None Include="Resources\LogoSettings.png" />
     <Resource Include="Resources\ButtonIcons\addIcon.png" />
     <Resource Include="Resources\ButtonIcons\deleteIcon.png" />
     <None Include="Resources\dev32x32.png" />
@@ -147,6 +157,10 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

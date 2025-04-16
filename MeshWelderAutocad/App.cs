@@ -70,8 +70,8 @@ namespace MeshWelderAutocad
                     "\n   - Исходные данные приходят из AutoCAD." +
                     "\n\n1. Если армирование выполнялось в Revit, необходимо выполнить экспорт вида в DWG. Для этого на вкладке \"DNS_Plugins\" на панели \"MeshWelder\" выбрать кнопку \"MeshExport\". В открывшемся меню выбрать виды, которые необходимо выгрузить в DWG и указать путь сохранения файлов. Выгрузка происходит в формате \"1 вид = 1 файл DWG\". Экспорт в DWG выполняется на создаваемый слой \"MESH\" (без кавычек). Экспортируемые элементы переносятся в DWG категорией \"отрезок\". В зависимости от диаметра арматурных стержней в Revit (параметр \"ADSK_Наименование\"), линиям присваиваются цвета. Затем у сетки определяется габарит, нижний левый угол которого переносится в абсолютные координаты 0.0. Если в файле есть слои, кроме \"MESH\", то они удаляются, а неудаляемые - скрываются, замораживаются и блокируются." +
                     "\n\n2. Если армирование выполнялось в AutoCAD, то на этапе разработки КЖ.И стержни должны выполняться категорией \"полилинии\", иметь замкнутый контур, углы между отрезками контура 90°, строиться на слое \"MESH\" (без кавычек), а также иметь цвета, соответствующие их диаметру. Находясь в окне AutoCAD, указать папку, из которой будут обрабатываться файлы формата DWG, а также папку, куда будут сохранены результаты преобразования. Обработка - пакетная. В каждом файле проводится проверка полилиний. Если элементы категории \"полилиния\" имеют замкнутый контур, то внутри него строится продольная средняя линия категорией \"отрезок\", а полилиния удаляется. Если элементы категории \"полилиния\" не имеют замкнутого контура, то они преобразуются в элементы категории \"отрезок\". В каждом файле у сетки определяется габарит, нижний левый угол которого переносится в абсолютные координаты 0.0. Если в файле есть слои, кроме \"MESH\", то они удаляются, а неудаляемые - скрываются, замораживаются и блокируются.",
-                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
-                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                Image = GetImageSourceByBitMapFromResource(Resource.EVG_16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.EVG_32x32),
                 CommandHandler = new RelayCommand((_) => Commands.MeshWelder.Command.CreateMesh(), (_) => true)
             };
             RibbonButton btnLaser = new RibbonButton
@@ -82,8 +82,8 @@ namespace MeshWelderAutocad
                 Text = "Лазер",
                 ShowText = true,
                 ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
-                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
-                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
                 CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
             };
             RibbonButton btnSettings = new RibbonButton
@@ -95,7 +95,7 @@ namespace MeshWelderAutocad
                 ShowText = true,
                 ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
                 Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
-                LargeImage = GetImageSourceByBitMapFromResource(Resources.dev32x32),
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.LogoSettings),
                 CommandHandler = new RelayCommand((_) => Commands.Settings.Command.ChangeSettingsDNS(), (_) => true)
             };
 
