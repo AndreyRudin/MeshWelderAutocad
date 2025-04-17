@@ -36,128 +36,119 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             //на какой-то хостинг, где я буду в БД его записывать, время запуска, имя модели, размер модели
 
             //Вызов команды из вкладки доступен даже если нету открытого чертежа
-
-            MissingDiameter = new List<double>();
-            if (!TryReadSettings(out var settings))
-                return;
-            Settings = settings;
-
-            var openFileDialog = new System.Windows.Forms.OpenFileDialog();
-            openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
-            openFileDialog.FilterIndex = 1;
-            openFileDialog.Multiselect = false;
-
-            var result = openFileDialog.ShowDialog();
-
-            if (result != System.Windows.Forms.DialogResult.OK)
-                return;
-
-
-            string jsonFilePath = openFileDialog.FileName;
-            string jsonContent = File.ReadAllText(jsonFilePath);
-
-            DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(List<Mesh>));
-            List<Mesh> meshs;
-            using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonContent)))
+            try
             {
-                object objResponse = jsonSerializer.ReadObject(stream);
-                meshs = objResponse as List<Mesh>;
-            }
+                MissingDiameter = new List<double>();
 
-            if (meshs == null)
-            {
-                MessageBox.Show("Некорректный JSON. Требуется выбрать корректный файл");
-                return;
-            }
+                Settings = ReadSettings();
 
-            string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
-            string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string generalDwgDirectory = Path.Combine(jsonDirectory, $"{meshs[0].RevitModelName}_DWG-{timeStamp}");
-            Directory.CreateDirectory(generalDwgDirectory);
+                var openFileDialog = new System.Windows.Forms.OpenFileDialog();
+                openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
+                openFileDialog.FilterIndex = 1;
+                openFileDialog.Multiselect = false;
 
-            string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
-            string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
+                var result = openFileDialog.ShowDialog();
 
-            foreach (var mesh in meshs)
-            {
-                Document newDoc = acadApp.DocumentManager.Add(templatePath);
-                Database db = newDoc.Database;
+                if (result != System.Windows.Forms.DialogResult.OK)
+                    return;
 
-                var directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
-                var path = Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf");
 
-                using (DocumentLock docLock = newDoc.LockDocument())
+                string jsonFilePath = openFileDialog.FileName;
+                string jsonContent = File.ReadAllText(jsonFilePath);
+
+                DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(List<Mesh>));
+                List<Mesh> meshs;
+                using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonContent)))
                 {
-                    CreateLayer(db, "MESH");
-                    using (Transaction tr = db.TransactionManager.StartTransaction())
-                    {
-                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-                        LayerTable layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForWrite);
+                    object objResponse = jsonSerializer.ReadObject(stream);
+                    meshs = objResponse as List<Mesh>;
+                }
 
-                        foreach (var rebar in mesh.Rebars)
+                if (meshs == null)
+                {
+                    MessageBox.Show("Некорректный JSON. Требуется выбрать корректный файл");
+                    return;
+                }
+
+                string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
+                string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
+                string generalDwgDirectory = Path.Combine(jsonDirectory, $"{meshs[0].RevitModelName}_DWG-{timeStamp}");
+                Directory.CreateDirectory(generalDwgDirectory);
+
+                string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
+                string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
+
+                foreach (var mesh in meshs)
+                {
+                    Document newDoc = acadApp.DocumentManager.Add(templatePath);
+                    Database db = newDoc.Database;
+
+                    var directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
+                    var path = Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf");
+
+                    using (DocumentLock docLock = newDoc.LockDocument())
+                    {
+                        CreateLayer(db, "MESH");
+                        using (Transaction tr = db.TransactionManager.StartTransaction())
                         {
-                            Line line = new Line(
-                                new Point3d(rebar.StartPoint.X, rebar.StartPoint.Y, 0),
-                                new Point3d(rebar.EndPoint.X, rebar.EndPoint.Y, 0));
-                            line.Color = GetColor(rebar.Diameter);
-                            ObjectId layerId = layerTable["MESH"];
-                            line.LayerId = layerId;
-                            modelSpace.AppendEntity(line);
-                            tr.AddNewlyCreatedDBObject(line, true);
+                            BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                            BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                            LayerTable layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForWrite);
+
+                            foreach (var rebar in mesh.Rebars)
+                            {
+                                Line line = new Line(
+                                    new Point3d(rebar.StartPoint.X, rebar.StartPoint.Y, 0),
+                                    new Point3d(rebar.EndPoint.X, rebar.EndPoint.Y, 0));
+                                line.Color = GetColor(rebar.Diameter);
+                                ObjectId layerId = layerTable["MESH"];
+                                line.LayerId = layerId;
+                                modelSpace.AppendEntity(line);
+                                tr.AddNewlyCreatedDBObject(line, true);
+                            }
+
+                            ObjectId layerIdActive = layerTable["MESH"];
+                            db.Clayer = layerIdActive;
+
+                            tr.Commit();
                         }
 
-                        ObjectId layerIdActive = layerTable["MESH"];
-                        db.Clayer = layerIdActive;
+                        if (!Directory.Exists(directoryDwgForPanel))
+                            Directory.CreateDirectory(directoryDwgForPanel);
 
-                        tr.Commit();
+                        newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
+
+
                     }
-
-                    if (!Directory.Exists(directoryDwgForPanel))
-                        Directory.CreateDirectory(directoryDwgForPanel);
-
-                    newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
-
-
+                    newDoc.CloseAndDiscard();
                 }
-                newDoc.CloseAndDiscard();
+                File.Delete(jsonFilePath);
+                if (MissingDiameter.Count != 0)
+                {
+                    var validDiameters = MissingDiameter.Distinct().OrderBy(d => d).ToList();
+                    string missingDiameter = string.Join(", ", validDiameters);
+                    MessageBox.Show($"Данные диаметры: {missingDiameter} не найдены в файле настроек, для них принят цвет по умолчанию", "Warning");
+                }
             }
-            //File.Delete(jsonFilePath);
-            if (MissingDiameter.Count != 0)
+            catch (CustomException e)
             {
-                var validDiameters = MissingDiameter.Distinct().OrderBy(d => d).ToList();
-                string missingDiameter = string.Join(", ", validDiameters);
-                MessageBox.Show($"Данные диаметры: {missingDiameter} не найдены в файле настроек, для них принят цвет по умолчанию", "Warning");
+                MessageBox.Show(e.ToString(), "Ошибка");
+            }
+            catch (System.Exception e)
+            {
+                MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
             }
         }
 
-        private static bool TryReadSettings(out SettingStorage settings)
+        private static SettingStorage ReadSettings()
         {
-            settings = null;
-
             if (!File.Exists(_defaultSettingPath))
-            {
-                MessageBox.Show("Файл настроек не найден. Пожалуйста, сначала создайте его в настройках плагина.",
-                                "Warning",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
-                return false;
-            }
+                throw new CustomException("Конфигурационный файл не найдет или не создан, создайте его через настройки");
 
-            try
-            {
-                string jsonString = File.ReadAllText(_defaultSettingPath);
-                settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
-                return true;
-            }
-            catch (CustomException ex)
-            {
-                MessageBox.Show("Ошибка при чтении файла настроек:\n" + ex.Message,
-                                "Ошибка конфигурации",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Error);
-                return false;
-            }
+            string jsonString = File.ReadAllText(_defaultSettingPath);
+            SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
+            return settings;
+
         }
 
         public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)

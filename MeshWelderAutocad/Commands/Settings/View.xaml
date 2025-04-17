@@ -145,7 +145,8 @@
                                  PreviewTextInput="ColorTextBox_PreviewTextInput"
                                  DataObject.Pasting="ColorTextBox_Pasting"
                                  GotFocus="ColorTextBox_GotFocus"
-                                 LostFocus="ColorTextBox_LostFocus" />
+                                 LostFocus="ColorTextBox_LostFocus"
+                                 ToolTip="Доступные вводимые значения от 0 до 255"/>
                                 <!--TextChanged="ColorTextBox_TextChanged"-->
                             <TextBox Text="{Binding Color.Green, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
@@ -154,7 +155,8 @@
                                  PreviewTextInput="ColorTextBox_PreviewTextInput"
                                  DataObject.Pasting="ColorTextBox_Pasting" 
                                  GotFocus="ColorTextBox_GotFocus"
-                                 LostFocus="ColorTextBox_LostFocus" />
+                                 LostFocus="ColorTextBox_LostFocus"
+                                 ToolTip="Доступные вводимые значения от 0 до 255"/>
                                 <!--TextChanged="ColorTextBox_TextChanged"-->
                             <TextBox Text="{Binding Color.Blue, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
@@ -163,7 +165,8 @@
                                  PreviewTextInput="ColorTextBox_PreviewTextInput"
                                  DataObject.Pasting="ColorTextBox_Pasting"
                                  GotFocus="ColorTextBox_GotFocus"
-                                 LostFocus="ColorTextBox_LostFocus"/>
+                                 LostFocus="ColorTextBox_LostFocus"
+                                 ToolTip="Доступные вводимые значения от 0 до 255"/>
                                 <!--TextChanged="ColorTextBox_TextChanged"-->
                             <Button Command="{Binding DataContext.DeleteRowDiameterColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Style="{StaticResource ButtonIconStyle}"

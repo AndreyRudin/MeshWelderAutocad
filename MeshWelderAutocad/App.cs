@@ -94,7 +94,6 @@ namespace MeshWelderAutocad
                 Text = "Настройки",
                 ShowText = true,
                 ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
-                Image = GetImageSourceByBitMapFromResource(Resources.dev16x16),
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.LogoSettings),
                 CommandHandler = new RelayCommand((_) => Commands.Settings.Command.ChangeSettingsDNS(), (_) => true)
             };
