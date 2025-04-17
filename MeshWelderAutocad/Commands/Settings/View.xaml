@@ -135,26 +135,37 @@
                         </Grid.ColumnDefinitions>
                         <TextBox Text="{Binding Diameter, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
-                                 Margin="0" />
+                                 Margin="0"
+                                 GotFocus="ColorTextBox_GotFocus"
+                                 LostFocus="ColorTextBox_LostFocus"/>
                         <TextBox Text="{Binding Color.Red, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="1"
                                  Margin="0"
                                  PreviewTextInput="ColorTextBox_PreviewTextInput"
-                                 TextChanged="ColorTextBox_TextChanged" />
-                        <TextBox Text="{Binding Color.Green, UpdateSourceTrigger=PropertyChanged}"
+                                 DataObject.Pasting="ColorTextBox_Pasting"
+                                 GotFocus="ColorTextBox_GotFocus"
+                                 LostFocus="ColorTextBox_LostFocus" />
+                                <!--TextChanged="ColorTextBox_TextChanged"-->
+                            <TextBox Text="{Binding Color.Green, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="2"
                                  Margin="0"
                                  PreviewTextInput="ColorTextBox_PreviewTextInput"
-                                 TextChanged="ColorTextBox_TextChanged" />
-                        <TextBox Text="{Binding Color.Blue, UpdateSourceTrigger=PropertyChanged}"
+                                 DataObject.Pasting="ColorTextBox_Pasting" 
+                                 GotFocus="ColorTextBox_GotFocus"
+                                 LostFocus="ColorTextBox_LostFocus" />
+                                <!--TextChanged="ColorTextBox_TextChanged"-->
+                            <TextBox Text="{Binding Color.Blue, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="3"
                                  Margin="0"
                                  PreviewTextInput="ColorTextBox_PreviewTextInput"
-                                 TextChanged="ColorTextBox_TextChanged" />
-                        <Button Command="{Binding DataContext.DeleteRowDiameterColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                 DataObject.Pasting="ColorTextBox_Pasting"
+                                 GotFocus="ColorTextBox_GotFocus"
+                                 LostFocus="ColorTextBox_LostFocus"/>
+                                <!--TextChanged="ColorTextBox_TextChanged"-->
+                            <Button Command="{Binding DataContext.DeleteRowDiameterColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Style="{StaticResource ButtonIconStyle}"
                                 CommandParameter="{Binding}"
                                 Grid.Column="4">

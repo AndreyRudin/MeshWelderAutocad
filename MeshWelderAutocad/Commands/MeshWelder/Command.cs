@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using MeshWelderAutocad.Commands.Settings;
+using MeshWelderAutocad.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,9 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             //Вызов команды из вкладки доступен даже если нету открытого чертежа
 
             MissingDiameter = new List<double>();
-            Settings = ReadSettings();
+            if (!TryReadSettings(out var settings))
+                return;
+            Settings = settings;
 
             var openFileDialog = new System.Windows.Forms.OpenFileDialog();
             openFileDialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
@@ -122,40 +125,39 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             //File.Delete(jsonFilePath);
             if (MissingDiameter.Count != 0)
             {
-                string missingDiameter = string.Join(", ", MissingDiameter);
+                var validDiameters = MissingDiameter.Distinct().OrderBy(d => d).ToList();
+                string missingDiameter = string.Join(", ", validDiameters);
                 MessageBox.Show($"Данные диаметры: {missingDiameter} не найдены в файле настроек, для них принят цвет по умолчанию", "Warning");
             }
         }
-        
-        private static SettingStorage ReadSettings()
+
+        private static bool TryReadSettings(out SettingStorage settings)
         {
+            settings = null;
+
             if (!File.Exists(_defaultSettingPath))
             {
-                var defaultSettings = SettingStorage.CreateDefaultSettings();
-                SaveDefaultSettings(defaultSettings);
-                return defaultSettings;
+                MessageBox.Show("Файл настроек не найден. Пожалуйста, сначала создайте его в настройках плагина.",
+                                "Warning",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                return false;
             }
+
             try
             {
                 string jsonString = File.ReadAllText(_defaultSettingPath);
-                SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
-                return settings ?? SettingStorage.CreateDefaultSettings();
+                settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
+                return true;
             }
-            catch (System.Exception ex)
+            catch (CustomException ex)
             {
-                MessageBox.Show(ex.Message, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
+                MessageBox.Show("Ошибка при чтении файла настроек:\n" + ex.Message,
+                                "Ошибка конфигурации",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                return false;
             }
-            return SettingStorage.CreateDefaultSettings();
-        }
-        private static void SaveDefaultSettings(SettingStorage settings)
-        {
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings
-            {
-                Formatting = Formatting.Indented
-            };
-
-            string jsonString = JsonConvert.SerializeObject(settings, jsonSettings);
-            File.WriteAllText(_defaultSettingPath, jsonString);
         }
 
         public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)

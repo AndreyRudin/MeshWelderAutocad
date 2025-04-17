@@ -47,7 +47,7 @@ namespace MeshWelderAutocad.Commands.Settings
                 _ => RebarDiameterColors.Count > 1);
             CancelCommand = new LambdaCommand(Cancel(),
                 _ => true);
-            SaveCommand = new LambdaCommand(SaveSettings(), CanSave);
+            SaveCommand = new LambdaCommand(SaveSettings());
 
             RebarDiameterColors.CollectionChanged += (s, e) =>
             {
@@ -59,7 +59,7 @@ namespace MeshWelderAutocad.Commands.Settings
         private SettingStorage ReadSettings()
         {
             if (!File.Exists(_defaultSettingPath))
-                return new SettingStorage();
+                return SettingStorage.CreateDefaultSettings();
 
             try
             {
@@ -71,7 +71,7 @@ namespace MeshWelderAutocad.Commands.Settings
             {
                 MessageBox.Show(ex.Message + ex.StackTrace, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
-            return new SettingStorage();
+            return SettingStorage.CreateDefaultSettings();
         }
     }
 }

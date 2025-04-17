@@ -52,21 +52,25 @@ namespace MeshWelderAutocad.Commands.Settings
                 View.Close();
             };
         }
-        private bool CanSave(object parameter)
-        {
-            bool isValidColor = RebarDiameterColors
-                .All(r => r.Color.Red <= 255 &&
-                     r.Color.Green <= 255 &&
-                     r.Color.Blue <= 255);
-            bool areDiametersUnique = RebarDiameterColors.Select(r => r.Diameter).Distinct().Count() == RebarDiameterColors.Count;
-
-            return isValidColor && areDiametersUnique;
-        }
 
         private Action<object> SaveSettings()
         {
             return _ =>
             {
+                var duplicateDiameters = RebarDiameterColors
+                .GroupBy(r => r.Diameter)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+                if (duplicateDiameters.Any())
+                {
+                    string invalidDiameter = string.Join(", ", duplicateDiameters);
+                    MessageBox.Show($"Диаметры не должны повторятся\nПовторяющиеся диаметры: {invalidDiameter}",
+                    "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 SettingStorage settings = new SettingStorage()
                 {
                     RebarDiameterColors = this.RebarDiameterColors.ToList()

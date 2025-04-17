@@ -11,7 +11,7 @@ using System.Windows;
 internal class SettingStorage
 {
     public List<RebarDiameterColor> RebarDiameterColors { get; set; } = new List<RebarDiameterColor>();
-
+    
     public static SettingStorage CreateDefaultSettings()
     {
         return new SettingStorage

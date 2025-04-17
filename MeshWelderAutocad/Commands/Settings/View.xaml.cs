@@ -28,20 +28,65 @@ namespace MeshWelderAutocad.Commands.Settings
 
         private void ColorTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            e.Handled = !int.TryParse(e.Text, out _);
+            var textBox = sender as TextBox;
+
+            string proposedText = textBox.Text.Insert(textBox.SelectionStart, e.Text);
+
+            if (int.TryParse(proposedText, out int value))
+            {
+                e.Handled = value < 0 || value > 255;
+            }
+            else
+            {
+                e.Handled = true;
+            }
         }
 
-        private void ColorTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        //private void ColorTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        //{
+        //    var textBox = sender as TextBox;
+        //    if (int.TryParse(textBox.Text, out int value))
+        //    {
+        //        if (value < 0 || value > 255)
+        //        {
+        //            MessageBox.Show("Введите значение от 0 до 255");
+        //            textBox.Text = "255";
+        //            textBox.SelectionStart = textBox.Text.Length;
+        //        }
+        //    }
+        //}
+        private void ColorTextBox_Pasting(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(string)))
+            {
+                string pasteText = e.DataObject.GetData(typeof(string)) as string;
+                var textBox = sender as TextBox;
+
+                string proposedText = textBox.Text.Insert(textBox.SelectionStart, pasteText);
+
+                if (!int.TryParse(proposedText, out int value) || value < 0 || value > 255)
+                {
+                    e.CancelCommand();
+                }
+            }
+            else
+            {
+                e.CancelCommand();
+            }
+        }
+        private void ColorTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
             var textBox = sender as TextBox;
-            if (int.TryParse(textBox.Text, out int value))
+            textBox.Tag = textBox.Text;
+        }
+
+        private void ColorTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+
+            if (string.IsNullOrWhiteSpace(textBox.Text))
             {
-                if (value < 0 || value > 255)
-                {
-                    MessageBox.Show("Введите значение от 0 до 255");
-                    textBox.Text = "255";
-                    textBox.SelectionStart = textBox.Text.Length;
-                }
+                textBox.Text = textBox.Tag?.ToString() ?? "0";
             }
         }
     }
