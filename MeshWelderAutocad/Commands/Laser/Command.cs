@@ -63,6 +63,7 @@ namespace MeshWelderAutocad.Commands.Laser
                             CreateEmbeddedDetail5("9. ЗД 1.5");
                             CreateEmbeddedDetail6And9();
                             CreateEmbeddedDetail7("8. ЗД 1.7");
+                            //Добавить обработку ЗД.1.8
                             CreatePockets("7. Карманы");
                             CreateLoops("2. Петли");
                             CreateAnchors("5. Анкера");
