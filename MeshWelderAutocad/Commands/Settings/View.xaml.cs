@@ -14,6 +14,11 @@ namespace MeshWelderAutocad.Commands.Settings
         public View()
         {
             InitializeComponent();
+
+            if (DataContext is ViewModel vm)
+            {
+                vm.SortDiametersByValue();
+            }
         }
 
         private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -42,19 +47,6 @@ namespace MeshWelderAutocad.Commands.Settings
             }
         }
 
-        //private void ColorTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        //{
-        //    var textBox = sender as TextBox;
-        //    if (int.TryParse(textBox.Text, out int value))
-        //    {
-        //        if (value < 0 || value > 255)
-        //        {
-        //            MessageBox.Show("Введите значение от 0 до 255");
-        //            textBox.Text = "255";
-        //            textBox.SelectionStart = textBox.Text.Length;
-        //        }
-        //    }
-        //}
         private void ColorTextBox_Pasting(object sender, DataObjectPastingEventArgs e)
         {
             if (e.DataObject.GetDataPresent(typeof(string)))

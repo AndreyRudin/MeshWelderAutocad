@@ -5,6 +5,7 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Windows;
 using System.Windows.Input;
+using System.Linq;
 namespace MeshWelderAutocad.Commands.Settings
 {
     internal partial class ViewModel : BaseViewModel
@@ -41,6 +42,8 @@ namespace MeshWelderAutocad.Commands.Settings
         {
             RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(ReadSettings().RebarDiameterColors);
 
+            SortDiametersByValue();
+
             AddRowDiameterColorCommand = new LambdaCommand(AddRowDiameterColor(),
                 _ => true);
             DeleteRowDiameterColorCommand = new LambdaCommand(DeleteRowDiameterColor(),
@@ -72,6 +75,11 @@ namespace MeshWelderAutocad.Commands.Settings
                 MessageBox.Show(ex.Message + ex.StackTrace, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
             return SettingStorage.CreateDefaultSettings();
+        }
+
+        public void SortDiametersByValue()
+        {
+            RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(RebarDiameterColors.OrderBy(d => d.Diameter));
         }
     }
 }

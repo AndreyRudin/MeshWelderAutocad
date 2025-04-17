@@ -63,6 +63,16 @@ namespace MeshWelderAutocad {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap dev32 {
+            get {
+                object obj = ResourceManager.GetObject("dev32", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap EVG_16x16 {
             get {
                 object obj = ResourceManager.GetObject("EVG_16x16", resourceCulture);

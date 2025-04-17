@@ -87,6 +87,7 @@
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
     </Reference>
@@ -101,6 +102,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Developers\Command.cs" />
+    <Compile Include="Commands\Developers\View.xaml.cs">
+      <DependentUpon>View.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Commands\Laser\Command.cs" />
     <Compile Include="Commands\Laser\Dtos\Data.cs" />
     <Compile Include="Commands\MeshWelder\Command.cs" />
@@ -143,6 +148,8 @@
     <Content Include="ForInstaller\MeshWelder.bundle\Content\MeshWelderAutocad.dll" />
     <Content Include="ForInstaller\MeshWelder.bundle\PackageContents.xml" />
     <Content Include="Installer.iss" />
+    <Content Include="Resources\dev32.png" />
+    <Resource Include="Resources\developers.png" />
     <Content Include="Resources\EVG_16x16.png" />
     <Content Include="Resources\EVG_32x32.png" />
     <Content Include="Resources\Laser_16x16.png" />
@@ -164,6 +171,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Commands\Developers\View.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Commands\Settings\View.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -49,6 +49,7 @@ namespace MeshWelderAutocad
         private void AddContentToTab(RibbonTab rtab)
         {
             rtab.Panels.Add(AddPanelOne());
+            rtab.Panels.Add(AddInfoPanel());
         }
         private static RibbonPanel AddPanelOne()
         {
@@ -101,6 +102,34 @@ namespace MeshWelderAutocad
             rps.Items.Add(btnMeshWelder);
             rps.Items.Add(btnLaser);
             rps.Items.Add(btnSettings);
+
+            return rp;
+        }
+        private static RibbonPanel AddInfoPanel()
+        {
+            var rps = new RibbonPanelSource
+            {
+                Title = "    INFO    "
+            };
+
+            RibbonPanel rp = new RibbonPanel
+            {
+                Source = rps
+            };
+
+            RibbonButton btnDevelopers = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Разработчики",
+                ShowText = true,
+                ToolTip = "Команда разработки и обратная связь",
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.dev32),
+                CommandHandler = new RelayCommand((_) => Commands.Developers.Command.ShowDevelopers(), (_) => true)
+            };
+
+            rps.Items.Add(btnDevelopers);
 
             return rp;
         }

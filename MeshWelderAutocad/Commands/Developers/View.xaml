@@ -1,0 +1,40 @@
+﻿<Window x:Class="MeshWelderAutocad.Commands.Developers.View"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:MeshWelderAutocad.Commands.Developers"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        Title="Разработчики"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight">
+    <StackPanel Margin="10"
+                Orientation="Horizontal">
+
+        <Image  Height="95"
+                VerticalAlignment="Top"
+                Source="pack://application:,,,/MeshWelderAutocad;component/Resources/developers.png"
+                Stretch="Fill"
+                HorizontalAlignment="Left"
+                Margin="0 4 10 0"
+                Width="190" />
+        <TextBlock Margin="0">
+             Разработано: 
+            <LineBreak />
+            ИП Савчук В.К. (ИНН: 253912696010) 
+            <LineBreak />
+            ООО "БИМ Проект Владивосток" (ИНН: 2543180568)
+            <LineBreak />
+            Команда разработки: Савчук В.К., Рудин А.А
+            <LineBreak />
+            <Hyperlink NavigateUri="mailto:savchuk.vk@yandex.ru"
+                       RequestNavigate="Hyperlink_RequestNavigate">savchuk.vk@yandex.ru</Hyperlink> |
+            <Hyperlink NavigateUri="mailto:bimproject.vl@yandex.ru"
+                       RequestNavigate="Hyperlink_RequestNavigate">bimproject.vl@yandex.ru</Hyperlink>
+            <LineBreak />
+            <Hyperlink NavigateUri="https://bim-vl.ru/"
+                       RequestNavigate="Hyperlink_RequestNavigate">https://bim-vl.ru/</Hyperlink>
+        </TextBlock>
+    </StackPanel>
+</Window>

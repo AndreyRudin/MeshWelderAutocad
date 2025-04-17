@@ -138,7 +138,7 @@
                                  Margin="0"
                                  GotFocus="ColorTextBox_GotFocus"
                                  LostFocus="ColorTextBox_LostFocus"/>
-                        <TextBox Text="{Binding Color.Red, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBox Text="{Binding Color.Red, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="1"
                                  Margin="0"
@@ -147,7 +147,6 @@
                                  GotFocus="ColorTextBox_GotFocus"
                                  LostFocus="ColorTextBox_LostFocus"
                                  ToolTip="Доступные вводимые значения от 0 до 255"/>
-                                <!--TextChanged="ColorTextBox_TextChanged"-->
                             <TextBox Text="{Binding Color.Green, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="2"
@@ -157,7 +156,6 @@
                                  GotFocus="ColorTextBox_GotFocus"
                                  LostFocus="ColorTextBox_LostFocus"
                                  ToolTip="Доступные вводимые значения от 0 до 255"/>
-                                <!--TextChanged="ColorTextBox_TextChanged"-->
                             <TextBox Text="{Binding Color.Blue, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource TextBoxStyle}"
                                  Grid.Column="3"
@@ -167,7 +165,6 @@
                                  GotFocus="ColorTextBox_GotFocus"
                                  LostFocus="ColorTextBox_LostFocus"
                                  ToolTip="Доступные вводимые значения от 0 до 255"/>
-                                <!--TextChanged="ColorTextBox_TextChanged"-->
                             <Button Command="{Binding DataContext.DeleteRowDiameterColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Style="{StaticResource ButtonIconStyle}"
                                 CommandParameter="{Binding}"
