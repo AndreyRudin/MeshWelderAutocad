@@ -14,11 +14,6 @@ namespace MeshWelderAutocad.Commands.Settings
         public View()
         {
             InitializeComponent();
-
-            if (DataContext is ViewModel vm)
-            {
-                vm.SortDiametersByValue();
-            }
         }
 
         private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

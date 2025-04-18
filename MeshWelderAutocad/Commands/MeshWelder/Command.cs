@@ -143,12 +143,17 @@ namespace MeshWelderAutocad.Commands.MeshWelder
         private static SettingStorage ReadSettings()
         {
             if (!File.Exists(_defaultSettingPath))
-                throw new CustomException("Конфигурационный файл не найдет или не создан, создайте его через настройки");
-
-            string jsonString = File.ReadAllText(_defaultSettingPath);
-            SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
-            return settings;
-
+                throw new CustomException("Конфигурационный файл не найден или не создан, создайте его через кнопку настройки");
+            try
+            {
+                string jsonString = File.ReadAllText(_defaultSettingPath);
+                SettingStorage settings = JsonConvert.DeserializeObject<SettingStorage>(jsonString);
+                return settings;
+            }
+            catch
+            {
+                throw new CustomException("Файл настроек не удалось прочитать. Удалите файл и создайте его снова через кнопку настройки");
+            }
         }
 
         public static Autodesk.AutoCAD.Colors.Color GetColor(double diameter)

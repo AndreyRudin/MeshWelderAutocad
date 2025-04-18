@@ -107,6 +107,7 @@ namespace MeshWelderAutocad
         }
         private static RibbonPanel AddInfoPanel()
         {
+            string versionDate = "v18.04.25-1";
             var rps = new RibbonPanelSource
             {
                 Title = "    INFO    "
@@ -122,7 +123,7 @@ namespace MeshWelderAutocad
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
                 Size = RibbonItemSize.Large,
-                Text = "Разработчики",
+                Text = versionDate,
                 ShowText = true,
                 ToolTip = "Команда разработки и обратная связь",
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.dev32),

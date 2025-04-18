@@ -40,9 +40,7 @@ namespace MeshWelderAutocad.Commands.Settings
 
         public ViewModel()
         {
-            RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(ReadSettings().RebarDiameterColors);
-
-            SortDiametersByValue();
+            RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(ReadSettings().RebarDiameterColors.OrderBy(d => d.Diameter));
 
             AddRowDiameterColorCommand = new LambdaCommand(AddRowDiameterColor(),
                 _ => true);
@@ -75,11 +73,6 @@ namespace MeshWelderAutocad.Commands.Settings
                 MessageBox.Show(ex.Message + ex.StackTrace, "Чтение настроек произошло с ошибкой, приняты настройки по умолчанию");
             }
             return SettingStorage.CreateDefaultSettings();
-        }
-
-        public void SortDiametersByValue()
-        {
-            RebarDiameterColors = new ObservableCollection<RebarDiameterColor>(RebarDiameterColors.OrderBy(d => d.Diameter));
         }
     }
 }
