@@ -23,10 +23,11 @@ DisableDirPage=yes
 AllowNoIcons=yes
 PrivilegesRequired=lowest
 OutputDir=C:\Users\Acer\Desktop\Work\Projects\01_Revit\03_DNS\06_MW\MeshWelderAutocad\MeshWelderAutocad
-OutputBaseFilename=DNSAutocad_2024-12-12
+OutputBaseFilename=SVK_DataExchanger_AutoCAD (DNS; 2024-04-12)
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=C:\Users\Acer\Desktop\Work\Projects\01_Revit\03_DNS\Installers\LOGO_CIRCLE.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
