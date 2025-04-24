@@ -46,6 +46,8 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         public List<EmbeddedPart7> EmbeddedPartsSeven { get; set; } = new List<EmbeddedPart7>();
         [DataMember]
         public List<EmbeddedPart> EmbeddedParts5 { get; set; } = new List<EmbeddedPart>();
+        [DataMember]
+        public List<EmbeddedPart7> EmbeddedParts8 { get; set; } = new List<EmbeddedPart7>();
         public Panel()
         {
 

@@ -63,6 +63,7 @@ namespace MeshWelderAutocad.Commands.Laser
                             CreateEmbeddedDetail5("9. ЗД 1.5");
                             CreateEmbeddedDetail6And9();
                             CreateEmbeddedDetail7("8. ЗД 1.7");
+                            CreateEmbeddedDetail8("8. ЗД 1.8");
                             CreatePockets("7. Карманы");
                             CreateLoops("2. Петли");
                             CreateAnchors("5. Анкера");
@@ -81,6 +82,27 @@ namespace MeshWelderAutocad.Commands.Laser
             catch (System.Exception e)
             {
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
+            }
+        }
+
+        private static void CreateEmbeddedDetail8(string layerName)
+        {
+            double width = 210.0;
+            double height = 240.0;
+            if (_panel.EmbeddedParts8.Count != 0)
+            {
+                CreateLayer(_db, layerName);
+                ObjectId layerId = _layerTable[layerName];
+                foreach (var detail8 in _panel.EmbeddedParts8)
+                {
+                    double minY = detail8.Y - height / 2.0;
+                    double maxY = detail8.Y + height / 2.0;
+
+                    CreateLine(detail8.MinX, minY, detail8.MinX, maxY, layerId);
+                    CreateLine(detail8.MinX, maxY, detail8.MaxX, maxY, layerId);
+                    CreateLine(detail8.MaxX, maxY, detail8.MaxX, minY, layerId);
+                    CreateLine(detail8.MaxX, minY, detail8.MinX, minY, layerId);
+                }
             }
         }
 
