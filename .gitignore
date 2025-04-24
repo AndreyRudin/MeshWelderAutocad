@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+*.dll
+*.exe
+*.xml
+
 # User-specific files
 *.rsuser
 *.suo
@@ -361,3 +365,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/MeshWelderAutocad/ForInstaller/MeshWelder.bundle/Content/MeshWelderAutocad.dll
+/MeshWelderAutocad/SVK_DataExchanger_AutoCAD (DNS; 2024-04-12).exe
