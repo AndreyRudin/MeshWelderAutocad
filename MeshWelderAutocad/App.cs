@@ -48,17 +48,31 @@ namespace MeshWelderAutocad
         }
         private void AddContentToTab(RibbonTab rtab)
         {
-            rtab.Panels.Add(AddPanelOne());
+            rtab.Panels.Add(AddPanelEVG());
+            rtab.Panels.Add(AddPanelLaser());
             rtab.Panels.Add(AddInfoPanel());
         }
-        private static RibbonPanel AddPanelOne()
+        private static RibbonPanel AddPanelEVG()
         {
             var rps = new RibbonPanelSource();
-            rps.Title = "    DSK_PRODUCTION    ";
+            rps.Title = "    EVG    ";
             RibbonPanel rp = new RibbonPanel();
             rp.Source = rps;
 
             var addinAssembly = typeof(App).Assembly;
+
+            RibbonButton btnSettings = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Настройки\nEVG",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.LogoSettings),
+                CommandHandler = new RelayCommand((_) => Commands.Settings.Command.ChangeSettingsDNS(), (_) => true)
+            };
+
             RibbonButton btnMeshWelder = new RibbonButton
             {
                 Orientation = Orientation.Vertical,
@@ -75,6 +89,19 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.EVG_32x32),
                 CommandHandler = new RelayCommand((_) => Commands.MeshWelder.Command.CreateMesh(), (_) => true)
             };
+            
+            rps.Items.Add(btnSettings);
+            rps.Items.Add(btnMeshWelder);
+
+            return rp;
+        }
+        private static RibbonPanel AddPanelLaser()
+        {
+            var rps = new RibbonPanelSource();
+            rps.Title = "    Проектор    ";
+            RibbonPanel rp = new RibbonPanel();
+            rp.Source = rps;
+
             RibbonButton btnLaser = new RibbonButton
             {
                 Orientation = Orientation.Vertical,
@@ -87,36 +114,18 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
                 CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
             };
-            RibbonButton btnSettings = new RibbonButton
-            {
-                Orientation = Orientation.Vertical,
-                AllowInStatusBar = true,
-                Size = RibbonItemSize.Large,
-                Text = "Настройки\nEVG",
-                ShowText = true,
-                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
-                LargeImage = GetImageSourceByBitMapFromResource(Resource.LogoSettings),
-                CommandHandler = new RelayCommand((_) => Commands.Settings.Command.ChangeSettingsDNS(), (_) => true)
-            };
-            rps.Items.Add(btnSettings);
-            rps.Items.Add(btnMeshWelder);
+
             rps.Items.Add(btnLaser);
-            
 
             return rp;
         }
         private static RibbonPanel AddInfoPanel()
         {
             string versionDate = "v21.04.25-2";
-            var rps = new RibbonPanelSource
-            {
-                Title = "    INFO    "
-            };
-
-            RibbonPanel rp = new RibbonPanel
-            {
-                Source = rps
-            };
+            var rps = new RibbonPanelSource();
+            rps.Title = "    INFO    ";
+            RibbonPanel rp = new RibbonPanel();
+            rp.Source = rps;
 
             RibbonButton btnDevelopers = new RibbonButton
             {
