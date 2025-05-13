@@ -19,7 +19,7 @@ namespace MeshWelderAutocad
 {
     public class App : IExtensionApplication
     {
-        public const string RibbonTitle = "DNS_Plugins";
+        public const string RibbonTitle = "DNS_DSK";
         public const string RibbonId = "DNSPluginsId";
 
         [CommandMethod("InitMeshWelder", CommandFlags.Transparent)]
@@ -64,7 +64,7 @@ namespace MeshWelderAutocad
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
                 Size = RibbonItemSize.Large,
-                Text = "Подготовка чертежей сеток\nдля сеткосварочной машины",
+                Text = "Сетки\nдля EVG",
                 ShowText = true,
                 ToolTip = "Плагин необходим для приведения DWG-файла с чертежом арматурной сетки, полученного путем экспорта из Revit или выполненного в AutoCAD, в соответствие с требованиями импорта в специализированное ПО \"Meshbuilder\".\r\n\r\nРабота выполняется в двух вариантах:" +
                     "\n   - Исходные данные приходят из Revit;" +
@@ -80,7 +80,7 @@ namespace MeshWelderAutocad
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
                 Size = RibbonItemSize.Large,
-                Text = "Лазер",
+                Text = "Разметка\nдля проектора",
                 ShowText = true,
                 ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
                 Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
@@ -98,10 +98,10 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.LogoSettings),
                 CommandHandler = new RelayCommand((_) => Commands.Settings.Command.ChangeSettingsDNS(), (_) => true)
             };
-
+            rps.Items.Add(btnSettings);
             rps.Items.Add(btnMeshWelder);
             rps.Items.Add(btnLaser);
-            rps.Items.Add(btnSettings);
+            
 
             return rp;
         }
