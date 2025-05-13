@@ -54,7 +54,7 @@ namespace MeshWelderAutocad
         private static RibbonPanel AddPanelOne()
         {
             var rps = new RibbonPanelSource();
-            rps.Title = "    MeshWelder    ";
+            rps.Title = "    DSK_PRODUCTION    ";
             RibbonPanel rp = new RibbonPanel();
             rp.Source = rps;
 
@@ -92,7 +92,7 @@ namespace MeshWelderAutocad
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
                 Size = RibbonItemSize.Large,
-                Text = "Настройки",
+                Text = "Настройки\nEVG",
                 ShowText = true,
                 ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.LogoSettings),
