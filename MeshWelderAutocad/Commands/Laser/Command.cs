@@ -202,11 +202,11 @@ namespace MeshWelderAutocad.Commands.Laser
         {
             double width = 210.0;
             double height = 240.0;
-            if (_panel.EmbeddedPartsSeven.Count != 0)
+            if (_panel.EmbeddedParts7.Count != 0)
             {
                 CreateLayer(_db, layerName);
                 ObjectId layerId = _layerTable[layerName];
-                foreach (var detail7 in _panel.EmbeddedPartsSeven)
+                foreach (var detail7 in _panel.EmbeddedParts7)
                 {
                     double minY = detail7.Y - height / 2.0;
                     double maxY = detail7.Y + height / 2.0;

@@ -43,7 +43,7 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public List<Pocket> Pockets { get; set; } = new List<Pocket>();
         [DataMember]
-        public List<EmbeddedPart7> EmbeddedPartsSeven { get; set; } = new List<EmbeddedPart7>();
+        public List<EmbeddedPart7> EmbeddedParts7 { get; set; } = new List<EmbeddedPart7>();
         [DataMember]
         public List<EmbeddedPart> EmbeddedParts5 { get; set; } = new List<EmbeddedPart>();
         [DataMember]
