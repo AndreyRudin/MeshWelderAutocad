@@ -22,7 +22,7 @@ namespace MeshWelderAutocad.Commands.Laser
         private static BlockTableRecord _modelSpace;
         private static Database _db;
 
-        private static double _widthDetail5 = 360.0;
+        private static double _widthDetail5 = 300.0;
         private static double _heightDetail5 = 240.0;
         [CommandMethod("CreateDrawingsForLaser")]
         public static void CreateDrawingsForLaser()
