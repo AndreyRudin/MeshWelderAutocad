@@ -24,6 +24,15 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static double _widthDetail5 = 300.0;
         private static double _heightDetail5 = 240.0;
+        private static double _widthDetail6 = 220.0;
+        private static double _heightDetail7 = 240.0;
+        private static double _heightDetail8 = 220.0;
+        private static double _widthDetail9 = 300.0;
+        private static double _widthDetail11 = 300.0;
+        private static double _widthPockets = 150.0;
+        private static double _heightPockets = 165.0;
+
+
         [CommandMethod("CreateDrawingsForLaser")]
         public static void CreateDrawingsForLaser()
         {
@@ -87,16 +96,14 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static void CreateEmbeddedDetail8(string layerName)
         {
-            double width = 210.0;
-            double height = 240.0;
             if (_panel.EmbeddedParts8.Count != 0)
             {
                 CreateLayer(_db, layerName);
                 ObjectId layerId = _layerTable[layerName];
                 foreach (var detail8 in _panel.EmbeddedParts8)
                 {
-                    double minY = detail8.Y - height / 2.0;
-                    double maxY = detail8.Y + height / 2.0;
+                    double minY = detail8.Y - _heightDetail8 / 2.0;
+                    double maxY = detail8.Y + _heightDetail8 / 2.0;
 
                     CreateLine(detail8.MinX, minY, detail8.MinX, maxY, layerId);
                     CreateLine(detail8.MinX, maxY, detail8.MaxX, maxY, layerId);
@@ -177,18 +184,16 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static void CreatePockets(string layerName)
         {
-            double width = 150.0;
-            double height = 165.0;
             if (_panel.Pockets.Count != 0)
             {
                 CreateLayer(_db, layerName);
                 ObjectId layerId = _layerTable[layerName];
                 foreach (var pocket in _panel.Pockets)
                 {
-                    double minX = pocket.X - width / 2.0;
-                    double maxX = pocket.X + width / 2.0;
+                    double minX = pocket.X - _widthPockets / 2.0;
+                    double maxX = pocket.X + _widthPockets / 2.0;
                     double minY = _panel.Formwork.MinYPanel;
-                    double maxY = _panel.Formwork.MinYPanel + height;
+                    double maxY = _panel.Formwork.MinYPanel + _heightPockets;
 
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(minX, maxY, maxX, maxY, layerId);
@@ -200,16 +205,14 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static void CreateEmbeddedDetail7(string layerName)
         {
-            double width = 210.0;
-            double height = 240.0;
             if (_panel.EmbeddedParts7.Count != 0)
             {
                 CreateLayer(_db, layerName);
                 ObjectId layerId = _layerTable[layerName];
                 foreach (var detail7 in _panel.EmbeddedParts7)
                 {
-                    double minY = detail7.Y - height / 2.0;
-                    double maxY = detail7.Y + height / 2.0;
+                    double minY = detail7.Y - _heightDetail7 / 2.0;
+                    double maxY = detail7.Y + _heightDetail7 / 2.0;
 
                     CreateLine(detail7.MinX, minY, detail7.MinX, maxY, layerId);
                     CreateLine(detail7.MinX, maxY, detail7.MaxX, maxY, layerId);
@@ -223,45 +226,42 @@ namespace MeshWelderAutocad.Commands.Laser
         {
             if (_panel.EmbeddedParts6.Count != 0)
             {
-                double width = 220.0;
                 CreateLayer(_db, "6. ЗД 1.6");
                 ObjectId layerId = _layerTable["6. ЗД 1.6"];
                 foreach (var detail6 in _panel.EmbeddedParts6)
                 {
                     double maxY = _panel.Formwork.MaxYPanel - 240.0 + 30.0;
                     double minY = _panel.Formwork.MaxYPanel - 240.0 - 30.0;
-                    double minX = detail6.X - width / 2.0;
-                    double maxX = detail6.X + width / 2.0;
+                    double minX = detail6.X - _widthDetail6 / 2.0;
+                    double maxX = detail6.X + _widthDetail6 / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(maxX, minY, maxX, maxY, layerId);
                 }
             }
             else if (_panel.EmbeddedParts9.Count != 0)
             {
-                double width = 300.0;
                 CreateLayer(_db, "6. ЗД 1.9");
                 ObjectId layerId = _layerTable["6. ЗД 1.9"];
                 foreach (var detail9 in _panel.EmbeddedParts9)
                 {
                     double maxY = _panel.Formwork.MaxYPanel + 30.0;
                     double minY = _panel.Formwork.MaxYPanel - 30.0;
-                    double minX = detail9.X - width / 2.0;
-                    double maxX = detail9.X + width / 2.0;
+                    double minX = detail9.X - _widthDetail9 / 2.0;
+                    double maxX = detail9.X + _widthDetail9 / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(maxX, minY, maxX, maxY, layerId);
                 }
             }
             else if (_panel.EmbeddedParts11.Count != 0)
             {
-                double width = 300.0;
                 CreateLayer(_db, "6. ЗД 1.11");
                 ObjectId layerId = _layerTable["6. ЗД 1.11"];
                 foreach (var detail11 in _panel.EmbeddedParts11)
                 {
                     double maxY = _panel.Formwork.MaxYPanel + 30.0;
                     double minY = _panel.Formwork.MaxYPanel - 30.0;
-                    double minX = detail11.X - width / 2.0;
-                    double maxX = detail11.X + width / 2.0;
+                    double minX = detail11.X - _widthDetail11 / 2.0;
+                    double maxX = detail11.X + _widthDetail11 / 2.0;
                     CreateLine(minX, minY, minX, maxY, layerId);
                     CreateLine(maxX, minY, maxX, maxY, layerId);
                 }
