@@ -154,9 +154,9 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public double Y { get; set; }
         [DataMember]
-        public double MinX { get; set; }
+        public double MinXAcad { get; set; }
         [DataMember]
-        public double MaxX { get; set; }
+        public double MaxXAcad { get; set; }
         public EmbeddedPart7() { }
     }
     [DataContract]

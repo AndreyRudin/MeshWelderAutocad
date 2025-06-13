@@ -26,7 +26,7 @@ namespace MeshWelderAutocad.Commands.Laser
         private static double _heightDetail5 = 240.0;
         private static double _widthDetail6 = 220.0;
         private static double _heightDetail7 = 240.0;
-        private static double _heightDetail8 = 220.0;
+        private static double _heightDetail8 = 240.0;
         private static double _widthDetail9 = 300.0;
         private static double _widthDetail11 = 300.0;
         private static double _widthPockets = 150.0;
@@ -91,25 +91,6 @@ namespace MeshWelderAutocad.Commands.Laser
             catch (System.Exception e)
             {
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
-            }
-        }
-
-        private static void CreateEmbeddedDetail8(string layerName)
-        {
-            if (_panel.EmbeddedParts8.Count != 0)
-            {
-                CreateLayer(_db, layerName);
-                ObjectId layerId = _layerTable[layerName];
-                foreach (var detail8 in _panel.EmbeddedParts8)
-                {
-                    double minY = detail8.Y - _heightDetail8 / 2.0;
-                    double maxY = detail8.Y + _heightDetail8 / 2.0;
-
-                    CreateLine(detail8.MinX, minY, detail8.MinX, maxY, layerId);
-                    CreateLine(detail8.MinX, maxY, detail8.MaxX, maxY, layerId);
-                    CreateLine(detail8.MaxX, maxY, detail8.MaxX, minY, layerId);
-                    CreateLine(detail8.MaxX, minY, detail8.MinX, minY, layerId);
-                }
             }
         }
 
@@ -214,10 +195,29 @@ namespace MeshWelderAutocad.Commands.Laser
                     double minY = detail7.Y - _heightDetail7 / 2.0;
                     double maxY = detail7.Y + _heightDetail7 / 2.0;
 
-                    CreateLine(detail7.MinX, minY, detail7.MinX, maxY, layerId);
-                    CreateLine(detail7.MinX, maxY, detail7.MaxX, maxY, layerId);
-                    CreateLine(detail7.MaxX, maxY, detail7.MaxX, minY, layerId);
-                    CreateLine(detail7.MaxX, minY, detail7.MinX, minY, layerId);
+                    CreateLine(detail7.MinXAcad, minY, detail7.MinXAcad, maxY, layerId);
+                    CreateLine(detail7.MinXAcad, maxY, detail7.MaxXAcad, maxY, layerId);
+                    CreateLine(detail7.MaxXAcad, maxY, detail7.MaxXAcad, minY, layerId);
+                    CreateLine(detail7.MaxXAcad, minY, detail7.MinXAcad, minY, layerId);
+                }
+            }
+        }
+
+        private static void CreateEmbeddedDetail8(string layerName)
+        {
+            if (_panel.EmbeddedParts8.Count != 0)
+            {
+                CreateLayer(_db, layerName);
+                ObjectId layerId = _layerTable[layerName];
+                foreach (var detail8 in _panel.EmbeddedParts8)
+                {
+                    double minY = detail8.Y - _heightDetail8 / 2.0;
+                    double maxY = detail8.Y + _heightDetail8 / 2.0;
+
+                    CreateLine(detail8.MinXAcad, minY, detail8.MinXAcad, maxY, layerId);
+                    CreateLine(detail8.MinXAcad, maxY, detail8.MaxXAcad, maxY, layerId);
+                    CreateLine(detail8.MaxXAcad, maxY, detail8.MaxXAcad, minY, layerId);
+                    CreateLine(detail8.MaxXAcad, minY, detail8.MinXAcad, minY, layerId);
                 }
             }
         }
