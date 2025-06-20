@@ -117,8 +117,6 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                             Directory.CreateDirectory(directoryDwgForPanel);
 
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
-
-
                     }
                     newDoc.CloseAndDiscard();
                 }
