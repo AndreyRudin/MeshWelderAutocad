@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ApplicationPackage SchemaVersion="1.0"
-                    AutodeskProduct="MeshWelder"
+                    AutodeskProduct="BP_PanelTools_ACAD"
                     ProductType="Application"
-                    Name="MeshWelder">
+                    Name="BP_PanelTools_ACAD">
   <Components>
-    <ComponentEntry AppName="MeshWelder"
+    <ComponentEntry AppName="BP_PanelTools_ACAD"
                     Version="1.0"
                     ModuleName="./Content/MeshWelderAutocad.dll"
                     AppDescription="Execute Assembly"

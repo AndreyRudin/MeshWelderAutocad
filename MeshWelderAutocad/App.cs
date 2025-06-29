@@ -98,7 +98,7 @@ namespace MeshWelderAutocad
         private static RibbonPanel AddPanelLaser()
         {
             var rps = new RibbonPanelSource();
-            rps.Title = "    Проектор    ";
+            rps.Title = "ЛАЗЕРНЫЙ ПРОЕКТОР";
             RibbonPanel rp = new RibbonPanel();
             rp.Source = rps;
 
