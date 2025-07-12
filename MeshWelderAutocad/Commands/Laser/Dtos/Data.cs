@@ -29,9 +29,7 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public List<Loop> Loops { get; set; } = new List<Loop>();
         [DataMember]
-        public List<Connection> Connection1 { get; set; } = new List<Connection>();
-        [DataMember]
-        public List<Connection> Connection2 { get; set; } = new List<Connection>();
+        public List<List<Connection>> ConnectionsGroups { get; set; } = new List<List<Connection>>();
         [DataMember]
         public List<Anchor> Anchors { get; set; } = new List<Anchor>();
         [DataMember]

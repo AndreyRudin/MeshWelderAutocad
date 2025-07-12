@@ -65,17 +65,25 @@ namespace MeshWelderAutocad.Commands.Laser
                             BlockTable blockTable = tr.GetObject(_db.BlockTableId, OpenMode.ForRead) as BlockTable;
                             _modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
                             _layerTable = (LayerTable)tr.GetObject(_db.LayerTableId, OpenMode.ForWrite);
-                            CreateFormwork("1. Опалубка");
-                            CreateOpenings("1. Опалубка");
-                            CreateConnections(_panel.Connection1, "3. Связи 1");
-                            CreateConnections(_panel.Connection2, "4. Связи 2");
-                            CreateEmbeddedDetail5("9. ЗД 1.5");
-                            CreateEmbeddedDetail6And9();
-                            CreateEmbeddedDetail7("8. ЗД 1.7");
-                            CreateEmbeddedDetail8("8. ЗД 1.8");
-                            CreatePockets("7. Карманы");
-                            CreateLoops("2. Петли");
-                            CreateAnchors("5. Анкера");
+                            CreateFormwork("Опалубка");
+                            CreateOpenings("Опалубка");
+                            CreateLoops($"Петли");
+                            for (int i = 0; i < _panel.ConnectionsGroups.Count; i++)
+                                CreateConnections(_panel.ConnectionsGroups[i], $"Связи {i + 1}");
+                            CreateAnchors($"Анкера");
+                            CreatePockets($"Карманы");
+                            if (_panel.EmbeddedParts5.Count != 0)
+                                CreateEmbeddedDetail5($"ЗД 1.5");
+                            if (_panel.EmbeddedParts6.Count != 0)
+                                CreateEmbeddedDetail9($"ЗД 1.6");
+                            if (_panel.EmbeddedParts7.Count != 0)
+                                CreateEmbeddedDetail7($"ЗД 1.7");
+                            if (_panel.EmbeddedParts8.Count != 0)
+                                CreateEmbeddedDetail8($"ЗД 1.8");
+                            if (_panel.EmbeddedParts9.Count != 0)
+                                CreateEmbeddedDetail9($"ЗД 1.9");
+                            if (_panel.EmbeddedParts11.Count != 0)
+                                CreateEmbeddedDetail11($"ЗД 1.11");
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
@@ -222,49 +230,46 @@ namespace MeshWelderAutocad.Commands.Laser
             }
         }
 
-        private static void CreateEmbeddedDetail6And9()
+        private static void CreateEmbeddedDetail6(string layerName)
         {
-            if (_panel.EmbeddedParts6.Count != 0)
+            CreateLayer(_db, layerName);
+            ObjectId layerId = _layerTable[layerName];
+            foreach (var detail6 in _panel.EmbeddedParts6)
             {
-                CreateLayer(_db, "6. ЗД 1.6");
-                ObjectId layerId = _layerTable["6. ЗД 1.6"];
-                foreach (var detail6 in _panel.EmbeddedParts6)
-                {
-                    double maxY = _panel.Formwork.MaxYPanel - 240.0 + 30.0;
-                    double minY = _panel.Formwork.MaxYPanel - 240.0 - 30.0;
-                    double minX = detail6.X - _widthDetail6 / 2.0;
-                    double maxX = detail6.X + _widthDetail6 / 2.0;
-                    CreateLine(minX, minY, minX, maxY, layerId);
-                    CreateLine(maxX, minY, maxX, maxY, layerId);
-                }
+                double maxY = _panel.Formwork.MaxYPanel - 240.0 + 30.0;
+                double minY = _panel.Formwork.MaxYPanel - 240.0 - 30.0;
+                double minX = detail6.X - _widthDetail6 / 2.0;
+                double maxX = detail6.X + _widthDetail6 / 2.0;
+                CreateLine(minX, minY, minX, maxY, layerId);
+                CreateLine(maxX, minY, maxX, maxY, layerId);
             }
-            else if (_panel.EmbeddedParts9.Count != 0)
+        }
+        private static void CreateEmbeddedDetail11(string layerName)
+        {
+            CreateLayer(_db, layerName);
+            ObjectId layerId = _layerTable[layerName];
+            foreach (var detail11 in _panel.EmbeddedParts11)
             {
-                CreateLayer(_db, "6. ЗД 1.9");
-                ObjectId layerId = _layerTable["6. ЗД 1.9"];
-                foreach (var detail9 in _panel.EmbeddedParts9)
-                {
-                    double maxY = _panel.Formwork.MaxYPanel + 30.0;
-                    double minY = _panel.Formwork.MaxYPanel - 30.0;
-                    double minX = detail9.X - _widthDetail9 / 2.0;
-                    double maxX = detail9.X + _widthDetail9 / 2.0;
-                    CreateLine(minX, minY, minX, maxY, layerId);
-                    CreateLine(maxX, minY, maxX, maxY, layerId);
-                }
+                double maxY = _panel.Formwork.MaxYPanel + 30.0;
+                double minY = _panel.Formwork.MaxYPanel - 30.0;
+                double minX = detail11.X - _widthDetail11 / 2.0;
+                double maxX = detail11.X + _widthDetail11 / 2.0;
+                CreateLine(minX, minY, minX, maxY, layerId);
+                CreateLine(maxX, minY, maxX, maxY, layerId);
             }
-            else if (_panel.EmbeddedParts11.Count != 0)
+        }
+        private static void CreateEmbeddedDetail9(string layerName)
+        {
+            CreateLayer(_db, layerName);
+            ObjectId layerId = _layerTable[layerName];
+            foreach (var detail9 in _panel.EmbeddedParts9)
             {
-                CreateLayer(_db, "6. ЗД 1.11");
-                ObjectId layerId = _layerTable["6. ЗД 1.11"];
-                foreach (var detail11 in _panel.EmbeddedParts11)
-                {
-                    double maxY = _panel.Formwork.MaxYPanel + 30.0;
-                    double minY = _panel.Formwork.MaxYPanel - 30.0;
-                    double minX = detail11.X - _widthDetail11 / 2.0;
-                    double maxX = detail11.X + _widthDetail11 / 2.0;
-                    CreateLine(minX, minY, minX, maxY, layerId);
-                    CreateLine(maxX, minY, maxX, maxY, layerId);
-                }
+                double maxY = _panel.Formwork.MaxYPanel + 30.0;
+                double minY = _panel.Formwork.MaxYPanel - 30.0;
+                double minX = detail9.X - _widthDetail9 / 2.0;
+                double maxX = detail9.X + _widthDetail9 / 2.0;
+                CreateLine(minX, minY, minX, maxY, layerId);
+                CreateLine(maxX, minY, maxX, maxY, layerId);
             }
         }
 
