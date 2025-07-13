@@ -132,7 +132,7 @@ namespace MeshWelderAutocad.Commands.Laser
         {
             if (connection.IsDiagonal)
             {
-                CreateLine(connection.X - 50 / Math.Sqrt(2), connection.Y -50 / Math.Sqrt(2), connection.X + 50 / Math.Sqrt(2), connection.Y + 50 / Math.Sqrt(2), layerId);
+                CreateLine(connection.X - 50 / Math.Sqrt(2), connection.Y - 50 / Math.Sqrt(2), connection.X + 50 / Math.Sqrt(2), connection.Y + 50 / Math.Sqrt(2), layerId);
                 CreateLine(connection.X - 50 / Math.Sqrt(2), connection.Y + 50 / Math.Sqrt(2), connection.X + 50 / Math.Sqrt(2), connection.Y - 50 / Math.Sqrt(2), layerId);
                 if (connection.Angle == 0)
                 {
@@ -299,14 +299,24 @@ namespace MeshWelderAutocad.Commands.Laser
             ObjectId layerId = _layerTable[layerName];
             foreach (var opening in _panel.Formwork.Openings)
             {
-                CreateLine(opening.MinX, opening.MinY,
-                           opening.MinX, opening.MaxY, layerId);
-                CreateLine(opening.MinX, opening.MaxY,
-                           opening.MaxX, opening.MaxY, layerId);
-                CreateLine(opening.MaxX, opening.MaxY,
-                           opening.MaxX, opening.MinY, layerId);
-                CreateLine(opening.MaxX, opening.MinY,
-                           opening.MinX, opening.MinY, layerId);
+                List<Point2D> points = opening.Points2D;
+
+                int count = points.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    Point2D p1 = points[i];
+                    Point2D p2 = points[(i + 1) % count];
+
+                    CreateLine(p1.X, p1.Z, p2.X, p2.Z, layerId);
+                }
+                //CreateLine(opening.MinX, opening.MinY,
+                //           opening.MinX, opening.MaxY, layerId);
+                //CreateLine(opening.MinX, opening.MaxY,
+                //           opening.MaxX, opening.MaxY, layerId);
+                //CreateLine(opening.MaxX, opening.MaxY,
+                //           opening.MaxX, opening.MinY, layerId);
+                //CreateLine(opening.MaxX, opening.MinY,
+                //           opening.MinX, opening.MinY, layerId);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Autodesk.AutoCAD.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -93,6 +94,32 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         }
     }
     [DataContract]
+    public class Point
+    {
+        [DataMember]
+        public double X { get; set; }
+        [DataMember]
+        public double Y { get; set; }
+        [DataMember]
+        public double Z { get; set; }
+        public Point() { }
+    }
+    [DataContract]
+    public class Point2D
+    {
+        [DataMember]
+        public double X { get; set; }
+        [DataMember]
+        public double Z { get; set; }
+    }
+    [DataContract]
+    public enum OpeningType
+    {
+        Window,
+        Door,
+        Hole
+    }
+    [DataContract]
     public class Opening
     {
         [DataMember]
@@ -104,12 +131,14 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public double MinX { get; set; }
         [DataMember]
-        public bool IsDoor { get; set; }
-        public Opening()
-        {
-
-        }
+        public OpeningType Type { get; set; }
+        [DataMember]
+        public List<Point> Points { get; set; } = new List<Point>();
+        [DataMember]
+        public List<Point2D> Points2D { get; set; } = new List<Point2D>();
+        public Opening() { }
     }
+
     [DataContract]
     public class Loop
     {
