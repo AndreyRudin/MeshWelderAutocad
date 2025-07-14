@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using MeshWelderAutocad.Commands.Laser.Dtos;
 using MeshWelderAutocad.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -299,27 +300,65 @@ namespace MeshWelderAutocad.Commands.Laser
             ObjectId layerId = _layerTable[layerName];
             foreach (var opening in _panel.Formwork.Openings)
             {
-                List<Point2D> points = opening.Points2D;
-
-                int count = points.Count;
-                for (int i = 0; i < count; i++)
+                foreach (var curve in opening.Curves)
                 {
-                    Point2D p1 = points[i];
-                    Point2D p2 = points[(i + 1) % count];
+                    if (curve is Dtos.Arc arc)
+                    {
+                        CreateArc(
+                            arc.StartPoint.X, arc.StartPoint.Z,
+                            arc.EndPoint.X, arc.EndPoint.Z,
+                            arc.Center.X, arc.Center.Z,
+                            layerId);
+                    }
+                    else if (curve is Dtos.Circle circle)
+                    {
+                        CreateCircle(circle.Center.X, circle.Center.Z, circle.Radius, layerId);
+                    }
+                    else if (curve is Dtos.Line line)
+                    {
+                        Point2D p1 = line.Start;
+                        Point2D p2 = line.End;
 
-                    CreateLine(p1.X, p1.Z, p2.X, p2.Z, layerId);
+                        CreateLine(p1.X, p1.Z, p2.X, p2.Z, layerId);
+                    }
                 }
-                //CreateLine(opening.MinX, opening.MinY,
-                //           opening.MinX, opening.MaxY, layerId);
-                //CreateLine(opening.MinX, opening.MaxY,
-                //           opening.MaxX, opening.MaxY, layerId);
-                //CreateLine(opening.MaxX, opening.MaxY,
-                //           opening.MaxX, opening.MinY, layerId);
-                //CreateLine(opening.MaxX, opening.MinY,
-                //           opening.MinX, opening.MinY, layerId);
             }
         }
+        private static void CreateArc(double startX, double startZ, double endX, double endZ, double centerX, double centerZ, ObjectId layerId)
+        {
 
+            Point3d center = new Point3d(centerX, 0, centerZ);
+            Point3d start = new Point3d(startX, 0, startZ);
+            Point3d end = new Point3d(endX, 0, endZ);
+
+            // Вектор от центра до начала и до конца
+            Vector3d vStart = start - center;
+            Vector3d vEnd = end - center;
+
+            double radius = vStart.Length;
+            double startAngle = Vector3d.XAxis.GetAngleTo(vStart, Vector3d.YAxis);
+            double endAngle = Vector3d.XAxis.GetAngleTo(vEnd, Vector3d.YAxis);
+
+            Autodesk.AutoCAD.DatabaseServices.Arc arc = new Autodesk.AutoCAD.DatabaseServices.Arc(center, radius, startAngle, endAngle)
+            {
+                LayerId = layerId
+            };
+
+            _modelSpace.AppendEntity(arc);
+            _activeTransaction.AddNewlyCreatedDBObject(arc, true);
+
+        }
+        private static void CreateCircle(double centerX, double centerZ, double radius, ObjectId layerId)
+        {
+            Point3d center = new Point3d(centerX, centerZ, 0);
+            Autodesk.AutoCAD.DatabaseServices.Circle circle = new Autodesk.AutoCAD.DatabaseServices.Circle(center, Vector3d.ZAxis, radius)
+            {
+                LayerId = layerId
+            };
+
+            _modelSpace.AppendEntity(circle);
+            _activeTransaction.AddNewlyCreatedDBObject(circle, true);
+        }
         private static void CreateFormwork(string layerName)
         {
             CreateLayer(_db, layerName);
@@ -336,7 +375,7 @@ namespace MeshWelderAutocad.Commands.Laser
 
         private static void CreateLine(double x1, double y1, double x2, double y2, ObjectId layerId)
         {
-            Line line = new Line(new Point3d(x1, y1, 0), new Point3d(x2, y2, 0));
+            Autodesk.AutoCAD.DatabaseServices.Line line = new Autodesk.AutoCAD.DatabaseServices.Line(new Point3d(x1, y1, 0), new Point3d(x2, y2, 0));
             line.LayerId = layerId;
             _modelSpace.AppendEntity(line);
             _activeTransaction.AddNewlyCreatedDBObject(line, true);
@@ -371,19 +410,37 @@ namespace MeshWelderAutocad.Commands.Laser
         {
             string jsonContent = File.ReadAllText(jsonFilePath);
 
-            DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(Data));
-            Data data;
-            using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonContent)))
+            try
             {
-                object objResponse = jsonSerializer.ReadObject(stream);
-                data = objResponse as Data;
+                var data = JsonConvert.DeserializeObject<Data>(jsonContent);
+
+                if (data == null)
+                    throw new CustomException("Некорректный JSON. Требуется выбрать корректный файл");
+
+                return data;
             }
-
-            if (data == null)
-                throw new CustomException("Некорректный JSON. Требуется выбрать корректный файл");
-
-            return data;
+            catch (JsonException ex)
+            {
+                throw new CustomException("Ошибка при чтении JSON: " + ex.Message);
+            }
         }
+        //private static Data GetData(string jsonFilePath)
+        //{
+        //    string jsonContent = File.ReadAllText(jsonFilePath);
+
+        //    DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(Data));
+        //    Data data;
+        //    using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonContent)))
+        //    {
+        //        object objResponse = jsonSerializer.ReadObject(stream);
+        //        data = objResponse as Data;
+        //    }
+
+        //    if (data == null)
+        //        throw new CustomException("Некорректный JSON. Требуется выбрать корректный файл");
+
+        //    return data;
+        //}
         private static string SelectJSON()
         {
             var openFileDialog = new OpenFileDialog();

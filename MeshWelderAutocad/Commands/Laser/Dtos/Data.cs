@@ -1,4 +1,6 @@
 ﻿using Autodesk.AutoCAD.Geometry;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,6 +95,101 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
             IsDiagonal = isDiagonal;
         }
     }
+
+    public class CurveConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => objectType == typeof(Curve);
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var obj = JObject.Load(reader);
+            string type = obj["Type"]?.ToString();
+            Curve result = type switch
+            {
+                "Line" => new Line(),
+                "Arc" => new Arc(),
+                "Circle" => new Circle(),
+                _ => throw new NotSupportedException($"Unknown type: {type}")
+            };
+            serializer.Populate(obj.CreateReader(), result);
+            return result;
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var jo = new JObject();
+            jo.Add("Type", value.GetType().Name);
+
+            switch (value)
+            {
+                case Line line:
+                    jo.Add("Start", JToken.FromObject(line.Start, serializer));
+                    jo.Add("End", JToken.FromObject(line.End, serializer));
+                    break;
+                case Arc arc:
+                    jo.Add("Center", JToken.FromObject(arc.Center, serializer));
+                    jo.Add("StartPoint", JToken.FromObject(arc.StartPoint, serializer));
+                    jo.Add("EndPoint", JToken.FromObject(arc.EndPoint, serializer));
+                    break;
+                case Circle circle:
+                    jo.Add("Center", JToken.FromObject(circle.Center, serializer));
+                    jo.Add("Radius", circle.Radius);
+                    break;
+            }
+
+            jo.WriteTo(writer);
+        }
+    }
+    [JsonConverter(typeof(CurveConverter))]
+    public abstract class Curve
+    {
+        public Curve() { }
+    }
+    [DataContract]
+    public class Point2D
+    {
+        public Point2D()
+        {
+            
+        }
+        [DataMember]
+        public double X { get; set; }
+        [DataMember]
+        public double Z { get; set; }
+    }
+    [DataContract]
+    public class Circle : Curve
+    {
+        public Circle() { }
+        [DataMember]
+        public Point2D Center { get; set; }
+        [DataMember]
+        public double Radius { get; set; }
+    }
+    [DataContract]
+    public class Arc : Curve
+    {
+        public Arc() { }
+
+        [DataMember]
+        public Point2D Center { get; set; }
+        [DataMember]
+        public Point2D StartPoint { get; set; }
+        [DataMember]
+        public Point2D EndPoint { get; set; }
+    }
+    [DataContract]
+    public class Line : Curve
+    {
+        public Line()
+        {
+
+        }
+        [DataMember]
+        public Point2D Start { get; set; }
+        [DataMember]
+        public Point2D End { get; set; }
+    }
     [DataContract]
     public class Point
     {
@@ -102,15 +199,8 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         public double Y { get; set; }
         [DataMember]
         public double Z { get; set; }
+
         public Point() { }
-    }
-    [DataContract]
-    public class Point2D
-    {
-        [DataMember]
-        public double X { get; set; }
-        [DataMember]
-        public double Z { get; set; }
     }
     [DataContract]
     public enum OpeningType
@@ -135,7 +225,8 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public List<Point> Points { get; set; } = new List<Point>();
         [DataMember]
-        public List<Point2D> Points2D { get; set; } = new List<Point2D>();
+        public List<Curve> Curves { get; set; } = new List<Curve>();
+
         public Opening() { }
     }
 
@@ -145,10 +236,6 @@ namespace MeshWelderAutocad.Commands.Laser.Dtos
         [DataMember]
         public double X { get; set; }
         public Loop() { }
-        public Loop(double x)
-        {
-            X = x;
-        }
     }
     [DataContract]
     public class Anchor
