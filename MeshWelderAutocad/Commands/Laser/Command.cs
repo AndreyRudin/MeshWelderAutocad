@@ -76,13 +76,13 @@ namespace MeshWelderAutocad.Commands.Laser
                             if (_panel.EmbeddedParts5.Count != 0)
                                 CreateEmbeddedDetail5($"ЗД 1.5");
                             if (_panel.EmbeddedParts6.Count != 0)
-                                CreateEmbeddedDetail($"ЗД 1.6", _panel.EmbeddedParts6, _widthDetail6);
+                                CreateEmbeddedDetail6($"ЗД 1.6", _panel.EmbeddedParts6, _widthDetail6);
                             if (_panel.EmbeddedParts7.Count != 0)
                                 CreateEmbeddedDetail7($"ЗД 1.7");
                             if (_panel.EmbeddedParts8.Count != 0)
                                 CreateEmbeddedDetail8($"ЗД 1.8");
                             if (_panel.EmbeddedParts9.Count != 0)
-                                CreateEmbeddedDetail($"ЗД 1.9", _panel.EmbeddedParts9, _widthDetail9);
+                                CreateEmbeddedDetail9($"ЗД 1.9", _panel.EmbeddedParts9, _widthDetail9);
                             if (_panel.EmbeddedParts11.Count != 0)
                                 CreateEmbeddedDetail11($"ЗД 1.11");
                             tr.Commit();
@@ -193,7 +193,7 @@ namespace MeshWelderAutocad.Commands.Laser
             }
         }
 
-        private static void CreateEmbeddedDetail7(string layerName)
+        private static void CreateEmbeddedDetail7(string layerName) 
         {
             if (_panel.EmbeddedParts7.Count != 0)
             {
@@ -231,14 +231,14 @@ namespace MeshWelderAutocad.Commands.Laser
             }
         }
 
-        private static void CreateEmbeddedDetail6(string layerName)
+        private static void CreateEmbeddedDetail6(string layerName, List<EmbeddedPart> parts, double widthDetaill)
         {
             CreateLayer(_db, layerName);
             ObjectId layerId = _layerTable[layerName];
             foreach (var detail6 in _panel.EmbeddedParts6)
             {
-                double maxY = _panel.Formwork.MaxYPanel - 240.0 + 30.0;
-                double minY = _panel.Formwork.MaxYPanel - 240.0 - 30.0;
+                double maxY = detail6.Y + 30.0; // _panel.Formwork.MaxYPanel - 240.0
+                double minY = detail6.Y - 30.0;
                 double minX = detail6.X - _widthDetail6 / 2.0;
                 double maxX = detail6.X + _widthDetail6 / 2.0;
                 CreateLine(minX, minY, minX, maxY, layerId);
@@ -259,7 +259,7 @@ namespace MeshWelderAutocad.Commands.Laser
                 CreateLine(maxX, minY, maxX, maxY, layerId);
             }
         }
-        private static void CreateEmbeddedDetail(string layerName, List<EmbeddedPart> parts, double widthDetaill)
+        private static void CreateEmbeddedDetail9(string layerName, List<EmbeddedPart> parts, double widthDetaill)
         {
             CreateLayer(_db, layerName);
             ObjectId layerId = _layerTable[layerName];
