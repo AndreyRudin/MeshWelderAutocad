@@ -76,13 +76,13 @@ namespace MeshWelderAutocad.Commands.Laser
                             if (_panel.EmbeddedParts5.Count != 0)
                                 CreateEmbeddedDetail5($"ЗД 1.5");
                             if (_panel.EmbeddedParts6.Count != 0)
-                                CreateEmbeddedDetail($"ЗД 1.6", _panel.EmbeddedParts6, _widthDetail6);
+                                CreateEmbeddedDetail6($"ЗД 1.6");
                             if (_panel.EmbeddedParts7.Count != 0)
                                 CreateEmbeddedDetail7($"ЗД 1.7");
                             if (_panel.EmbeddedParts8.Count != 0)
                                 CreateEmbeddedDetail8($"ЗД 1.8");
                             if (_panel.EmbeddedParts9.Count != 0)
-                                CreateEmbeddedDetail($"ЗД 1.9", _panel.EmbeddedParts9, _widthDetail9);
+                                CreateEmbeddedDetail9($"ЗД 1.9");
                             if (_panel.EmbeddedParts11.Count != 0)
                                 CreateEmbeddedDetail11($"ЗД 1.11");
                             tr.Commit();
@@ -259,16 +259,16 @@ namespace MeshWelderAutocad.Commands.Laser
                 CreateLine(maxX, minY, maxX, maxY, layerId);
             }
         }
-        private static void CreateEmbeddedDetail(string layerName, List<EmbeddedPart> parts, double widthDetaill)
+        private static void CreateEmbeddedDetail9(string layerName)
         {
             CreateLayer(_db, layerName);
             ObjectId layerId = _layerTable[layerName];
-            foreach (var detail9 in parts)
+            foreach (var detail9 in _panel.EmbeddedParts9)
             {
                 double maxY = _panel.Formwork.MaxYPanel + 30.0;
                 double minY = _panel.Formwork.MaxYPanel - 30.0;
-                double minX = detail9.X - widthDetaill / 2.0;
-                double maxX = detail9.X + widthDetaill / 2.0;
+                double minX = detail9.X - _widthDetail9 / 2.0;
+                double maxX = detail9.X + _widthDetail9 / 2.0;
                 CreateLine(minX, minY, minX, maxY, layerId);
                 CreateLine(maxX, minY, maxX, maxY, layerId);
             }
