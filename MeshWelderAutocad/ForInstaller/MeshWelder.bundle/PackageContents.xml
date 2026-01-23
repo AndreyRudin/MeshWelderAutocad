@@ -14,6 +14,7 @@
       <Commands>
         <Command Local="CreateMesh" Global="CreateMesh"/>
         <Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
+        <Command Local="CreateDrawingsForLaserEOM" Global="CreateDrawingsForLaserEOM"/>
 		<Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
       </Commands>
     </ComponentEntry>
