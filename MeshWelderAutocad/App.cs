@@ -136,7 +136,7 @@ namespace MeshWelderAutocad
         }
         private static RibbonPanel AddInfoPanel()
         {
-            string versionDate = "v25.11.15";
+            string versionDate = "v26.01.27";
             var rps = new RibbonPanelSource();
             rps.Title = "    INFO    ";
             RibbonPanel rp = new RibbonPanel();

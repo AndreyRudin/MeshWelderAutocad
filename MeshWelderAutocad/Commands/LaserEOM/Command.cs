@@ -13,6 +13,7 @@ using System.Text;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 using acadApp = Autodesk.AutoCAD.ApplicationServices.Application;
+using Arc = Autodesk.AutoCAD.DatabaseServices.Arc;
 
 namespace MeshWelderAutocad.Commands.LaserEOM
 {
@@ -124,19 +125,57 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                 for (int j = 0; j < pipes.Count; j++)
                 {
                     Pipe currentPipe = pipes[j];
-                    CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
-                    //if (i < pipes.Count - 1)
-                    //{
-                    //    Pipe nextPipe = pipes[i + 1];
-                    //    CreateArcFromTwoPoints(currentPipe.EndX, currentPipe.EndY, nextPipe.StartX, nextPipe.StartY, 58, layerId);
-                    //}
+                    if (currentPipe.IsArc)
+                        CreateArc(currentPipe, layerId);
+                    else
+                        CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
                 }
                 foreach (var box in systems[i].Boxes)
                 {
-                    CreateCircle(box.CenterX, box.CenterY, 70, layerId);
+                    CreateCircle(box.CenterX, box.CenterY, 35, layerId);
                 }
             }
         }
+        private static double AngleXY(Point3d center, Point3d p)
+        {
+            return Math.Atan2(p.Y - center.Y, p.X - center.X);
+        }
+        private static void CreateArc(Pipe currentPipe, ObjectId layerId)
+        {
+            Point3d center = new Point3d(currentPipe.CenterX, currentPipe.CenterY, 0);
+            Point3d start = new Point3d(currentPipe.StartX, currentPipe.StartY, 0);
+            Point3d end = new Point3d(currentPipe.EndX, currentPipe.EndY, 0);
+
+            double radius = center.DistanceTo(start);
+
+            // углы
+            double aStart = AngleXY(center, start);
+            double aEnd = AngleXY(center, end);
+
+            // нормализация в [0..2π)
+            if (aStart < 0) aStart += 2 * Math.PI;
+            if (aEnd < 0) aEnd += 2 * Math.PI;
+
+            /*
+             AutoCAD рисует CCW.
+             Нам нужна ВИЗУАЛЬНО CW:
+             CW(start → end) == CCW(end → start + 2π)
+            */
+            double ccwStart = aEnd;
+            double ccwEnd = aStart + 2 * Math.PI;
+
+            Arc arc = new Arc(
+                center,
+                radius,
+                ccwStart,
+                ccwEnd
+            );
+
+            arc.LayerId = layerId;
+            _modelSpace.AppendEntity(arc);
+            _activeTransaction.AddNewlyCreatedDBObject(arc, true);
+        }
+
         private static void CreateCircle(double centerX, double centerY, double radius, ObjectId layerId)
         {
             Point3d center = new Point3d(centerX, centerY, 0);
