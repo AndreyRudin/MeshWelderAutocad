@@ -24,7 +24,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
         private static BlockTableRecord _modelSpace;
         private static Database _db;
         [CommandMethod("CreateDrawingsForLaserEOM")]
-        public static void CreateDrawingsForLaser()
+        public static void CreateDrawingsForLaserEOM()
         {
             try
             {
@@ -57,15 +57,14 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                             _layerTable = (LayerTable)tr.GetObject(_db.LayerTableId, OpenMode.ForWrite);
                             CreateFormwork("Опалубка");
                             CreateLayer(_db, "Электрика");
-                            CreateBoxes("Электрика", _panel.Boxes);
-                            CreatePipes("Электрика", _panel.Pipes);
+                            CreateElectricalSystems("Электрика", _panel.ElectricalSystems);
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
                     }
                     newDoc.CloseAndDiscard();
                 }
-                File.Delete(jsonFilePath);
+                //File.Delete(jsonFilePath);
             }
             catch (CustomException e)
             {
@@ -74,21 +73,6 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             catch (System.Exception e)
             {
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
-            }
-        }
-
-        private static void CreatePipes(string layerName, List<Pipe> pipes)
-        {
-            ObjectId layerId = _layerTable[layerName];
-            for (int i = 0; i < pipes.Count; i++)
-            {
-                Pipe currentPipe = pipes[i];
-                CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
-                if (i < pipes.Count - 1)
-                {
-                    Pipe nextPipe = pipes[i + 1];
-                    CreateArcFromTwoPoints(currentPipe.EndX, currentPipe.EndY, nextPipe.StartX, nextPipe.StartY, 58, layerId);
-                }
             }
         }
         private static void CreateArcFromTwoPoints(double x1, double y1, double x2, double y2, double radius, ObjectId layerId)
@@ -131,12 +115,26 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             _modelSpace.AppendEntity(arc);
             _activeTransaction.AddNewlyCreatedDBObject(arc, true);
         }
-        private static void CreateBoxes(string layerName, List<Box> boxes)
+        private static void CreateElectricalSystems(string layerName, List<EOMSystem> systems)
         {
             ObjectId layerId = _layerTable[layerName];
-            foreach (var box in boxes)
+            for (int i = 0; i < systems.Count; i++)
             {
-                CreateCircle(box.CenterX, box.CenterY, 70, layerId);
+                List<Pipe> pipes = systems[i].Pipes;
+                for (int j = 0; j < pipes.Count; j++)
+                {
+                    Pipe currentPipe = pipes[j];
+                    CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
+                    //if (i < pipes.Count - 1)
+                    //{
+                    //    Pipe nextPipe = pipes[i + 1];
+                    //    CreateArcFromTwoPoints(currentPipe.EndX, currentPipe.EndY, nextPipe.StartX, nextPipe.StartY, 58, layerId);
+                    //}
+                }
+                foreach (var box in systems[i].Boxes)
+                {
+                    CreateCircle(box.CenterX, box.CenterY, 70, layerId);
+                }
             }
         }
         private static void CreateCircle(double centerX, double centerY, double radius, ObjectId layerId)

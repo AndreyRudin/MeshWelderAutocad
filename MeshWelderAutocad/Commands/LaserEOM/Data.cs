@@ -14,8 +14,20 @@ namespace MeshWelderAutocad.Commands.LaserEOM
         [DataMember]
         public string RevitFileName { get; set; }
         [DataMember]
-        public List<Panel> Panels { get; set; } = new List<Panel>();
+        public List<Panel> Panels { get; set; }
         public Data()
+        {
+
+        }
+    }
+    [DataContract]
+    public class EOMSystem
+    {
+        [DataMember]
+        public List<Box> Boxes { get; set; } = new();
+        [DataMember]
+        public List<Pipe> Pipes { get; set; } = new();
+        public EOMSystem()
         {
 
         }
@@ -28,9 +40,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
         [DataMember]
         public Formwork Formwork { get; set; }
         [DataMember]
-        public List<Box> Boxes { get; set; } = new();
-        [DataMember]
-        public List<Pipe> Pipes { get; set; } = new();
+        public List<EOMSystem> ElectricalSystems { get; set; } = new();
         public Panel()
         {
 
@@ -67,6 +77,12 @@ namespace MeshWelderAutocad.Commands.LaserEOM
     [DataContract]
     public class Pipe
     {
+        [DataMember]
+        public bool IsArc { get; set; }
+        [DataMember]
+        public double CenterX { get; set; }
+        [DataMember]
+        public double CenterY { get; set; }
         [DataMember]
         public double StartX { get; set; }
         [DataMember]

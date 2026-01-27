@@ -117,6 +117,21 @@ namespace MeshWelderAutocad
 
             rps.Items.Add(btnLaser);
 
+            RibbonButton btnLaserEOM = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Электроразметка\nдля проектора",
+                ShowText = true,
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
+                Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
+                CommandHandler = new RelayCommand((_) => Commands.LaserEOM.Command.CreateDrawingsForLaserEOM(), (_) => true)
+            };
+
+            rps.Items.Add(btnLaserEOM);
+
             return rp;
         }
         private static RibbonPanel AddInfoPanel()
