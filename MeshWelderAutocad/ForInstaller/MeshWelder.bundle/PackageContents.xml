@@ -15,7 +15,7 @@
         <Command Local="CreateMesh" Global="CreateMesh"/>
         <Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
         <Command Local="CreateDrawingsForLaserEOM" Global="CreateDrawingsForLaserEOM"/>
-		<Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
+		    <Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
       </Commands>
     </ComponentEntry>
     <RuntimeRequirements Platform="AutoCAD*" SeriesMin="R11.0" SeriesMax="R25.0"/>
