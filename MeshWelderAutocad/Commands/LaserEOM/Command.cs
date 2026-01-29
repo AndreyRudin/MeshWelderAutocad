@@ -146,34 +146,64 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             Point3d start = new Point3d(currentPipe.StartX, currentPipe.StartY, 0);
             Point3d end = new Point3d(currentPipe.EndX, currentPipe.EndY, 0);
 
+            // --- Радиус ---
             double radius = center.DistanceTo(start);
 
-            // углы
-            double aStart = AngleXY(center, start);
-            double aEnd = AngleXY(center, end);
+            // --- Векторы ---
+            Vector2d vStart = new Vector2d(start.X - center.X, start.Y - center.Y);
+            Vector2d vEnd = new Vector2d(end.X - center.X, end.Y - center.Y);
 
-            // нормализация в [0..2π)
-            if (aStart < 0) aStart += 2 * Math.PI;
-            if (aEnd < 0) aEnd += 2 * Math.PI;
+            // --- Углы (0..2π) ---
+            double aStart = NormalizeAngle(Math.Atan2(vStart.Y, vStart.X));
+            double aEnd = NormalizeAngle(Math.Atan2(vEnd.Y, vEnd.X));
 
-            /*
-             AutoCAD рисует CCW.
-             Нам нужна ВИЗУАЛЬНО CW:
-             CW(start → end) == CCW(end → start + 2π)
-            */
-            double ccwStart = aEnd;
-            double ccwEnd = aStart + 2 * Math.PI;
+            // --- Определяем направление через cross product ---
+            // Z-компонента векторного произведения
+            double cross = vStart.X * vEnd.Y - vStart.Y * vEnd.X;
 
+            bool isCW = cross < 0;
+
+            double startAngle;
+            double endAngle;
+
+            if (isCW)
+            {
+                // CW(start → end) == CCW(end → start)
+                startAngle = aEnd;
+                endAngle = aStart;
+
+                if (endAngle <= startAngle)
+                    endAngle += 2 * Math.PI;
+            }
+            else
+            {
+                // CCW(start → end)
+                startAngle = aStart;
+                endAngle = aEnd;
+
+                if (endAngle <= startAngle)
+                    endAngle += 2 * Math.PI;
+            }
+
+            // --- Создаём дугу ---
             Arc arc = new Arc(
                 center,
                 radius,
-                ccwStart,
-                ccwEnd
+                startAngle,
+                endAngle
             );
 
             arc.LayerId = layerId;
+
             _modelSpace.AppendEntity(arc);
             _activeTransaction.AddNewlyCreatedDBObject(arc, true);
+        }
+        private static double NormalizeAngle(double angle)
+        {
+            if (angle < 0)
+                angle += 2 * Math.PI;
+
+            return angle;
         }
 
         private static void CreateCircle(double centerX, double centerY, double radius, ObjectId layerId)
