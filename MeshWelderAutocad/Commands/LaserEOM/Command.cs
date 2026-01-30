@@ -59,6 +59,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                             CreateFormwork("Опалубка");
                             CreateLayer(_db, "Электрика");
                             CreateElectricalSystems("Электрика", _panel.ElectricalSystems);
+                            CreateDetails("Электрика", _panel.Details);
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
@@ -76,6 +77,23 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
             }
         }
+
+        private static void CreateDetails(string layerName, List<Detail> details)
+        {
+            ObjectId layerId = _layerTable[layerName];
+            foreach (var detail in details)
+            {
+                CreateLine(detail.MinX, detail.MinY,
+                            detail.MinX, detail.MaxY, layerId);
+                CreateLine(detail.MinX, detail.MaxY,
+                           detail.MaxX, detail.MaxY, layerId);
+                CreateLine(detail.MaxX, detail.MaxY,
+                           detail.MaxX, detail.MinY, layerId);
+                CreateLine(detail.MaxX, detail.MinY,
+                           detail.MinX, detail.MinY, layerId);
+            }
+        }
+
         private static void CreateArcFromTwoPoints(double x1, double y1, double x2, double y2, double radius, ObjectId layerId)
         {
             Point3d startPoint = new Point3d(x1, y1, 0);

@@ -41,11 +41,30 @@ namespace MeshWelderAutocad.Commands.LaserEOM
         public Formwork Formwork { get; set; }
         [DataMember]
         public List<EOMSystem> ElectricalSystems { get; set; } = new();
+        [DataMember]
+        public List<Detail> Details { get; set; } = new();
         public Panel()
         {
 
         }
     }
+    [DataContract]
+    public class Detail
+    {
+        [DataMember]
+        public double MinX { get; set; }
+        [DataMember]
+        public double MinY { get; set; }
+        [DataMember]
+        public double MaxX { get; set; }
+        [DataMember]
+        public double MaxY { get; set; }
+        public Detail()
+        {
+            
+        }
+    }
+
     [DataContract]
     public class Formwork
     {
