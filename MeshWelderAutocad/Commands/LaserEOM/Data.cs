@@ -21,13 +21,11 @@ namespace MeshWelderAutocad.Commands.LaserEOM
         }
     }
     [DataContract]
-    public class EOMSystem
+    public class Route
     {
         [DataMember]
-        public List<Box> Boxes { get; set; } = new();
-        [DataMember]
         public List<Pipe> Pipes { get; set; } = new();
-        public EOMSystem()
+        public Route()
         {
 
         }
@@ -40,17 +38,40 @@ namespace MeshWelderAutocad.Commands.LaserEOM
         [DataMember]
         public Formwork Formwork { get; set; }
         [DataMember]
-        public List<EOMSystem> ElectricalSystems { get; set; } = new();
+        public List<Route> Routes { get; set; } = new();
         [DataMember]
         public List<Detail> Details { get; set; } = new();
+        [DataMember]
+        public List<Box> Boxes { get; set; } = new();
+        [DataMember]
+        public List<EmbeddedTube> EmbeddedTubes { get; set; } = new();
         public Panel()
         {
 
         }
     }
     [DataContract]
+    public class EmbeddedTube
+    {
+        [DataMember]
+        public string LayerName { get; set; }
+        [DataMember]
+        public double Diameter { get; set; }
+        [DataMember]
+        public double CenterX { get; set; }
+        [DataMember]
+        public double CenterY { get; set; }
+        public EmbeddedTube()
+        {
+            
+        }
+    }
+
+    [DataContract]
     public class Detail
     {
+        [DataMember]
+        public string LayerName { get; set; }
         [DataMember]
         public double MinX { get; set; }
         [DataMember]
@@ -85,6 +106,8 @@ namespace MeshWelderAutocad.Commands.LaserEOM
     public class Box
     {
         [DataMember]
+        public string LayerName { get; set; }
+        [DataMember]
         public double CenterX { get; set; }
         [DataMember]
         public double CenterY { get; set; }
@@ -96,6 +119,8 @@ namespace MeshWelderAutocad.Commands.LaserEOM
     [DataContract]
     public class Pipe
     {
+        [DataMember]
+        public string LayerName { get; set; }
         [DataMember]
         public bool IsArc { get; set; }
         [DataMember]

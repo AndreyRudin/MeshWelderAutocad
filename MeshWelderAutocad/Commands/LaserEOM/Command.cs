@@ -58,15 +58,17 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                             _layerTable = (LayerTable)tr.GetObject(_db.LayerTableId, OpenMode.ForWrite);
                             CreateFormwork("Опалубка");
                             CreateLayer(_db, "Электрика");
-                            CreateElectricalSystems("Электрика", _panel.ElectricalSystems);
+                            CreateElectricalSystems("Электрика", _panel.Routes);
+                            CreateBoxes("Электрика", _panel.Boxes);
                             CreateDetails("Электрика", _panel.Details);
+                            CreateEmbeddedTubes("Электрика", _panel.EmbeddedTubes);
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
                     }
                     newDoc.CloseAndDiscard();
                 }
-                //File.Delete(jsonFilePath);
+                //File.Delete(jsonFilePath); //TODO1 после дебага удаляь
             }
             catch (CustomException e)
             {
@@ -75,6 +77,33 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             catch (System.Exception e)
             {
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
+            }
+        }
+
+        private static void CreateBoxes(string layerName, List<Box> boxes)
+        {
+            ObjectId layerId = _layerTable[layerName];
+            foreach (var box in boxes)
+            {
+                //CreateCircle(box.CenterX, box.CenterY, 35, layerId);
+                CreateCross(box.CenterX, box.CenterY, layerId);
+            }
+        }
+
+        private static void CreateEmbeddedTubes(string layerName, List<EmbeddedTube> embeddedTubes)
+        {
+            ObjectId layerId = _layerTable[layerName];
+            foreach (var tube in embeddedTubes)
+            {
+                if (tube.Diameter == 25)
+                {
+                    CreateCross(tube.CenterX, tube.CenterY, layerId);
+                }
+                else if (tube.Diameter == 40)
+                {
+                    CreateCross(tube.CenterX, tube.CenterY, layerId);
+                    CreateLine(tube.CenterX - 50, tube.CenterY, tube.CenterX + 50, tube.CenterY, layerId);
+                }
             }
         }
 
@@ -134,7 +163,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             _modelSpace.AppendEntity(arc);
             _activeTransaction.AddNewlyCreatedDBObject(arc, true);
         }
-        private static void CreateElectricalSystems(string layerName, List<EOMSystem> systems)
+        private static void CreateElectricalSystems(string layerName, List<Route> systems)
         {
             ObjectId layerId = _layerTable[layerName];
             for (int i = 0; i < systems.Count; i++)
@@ -143,17 +172,49 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                 for (int j = 0; j < pipes.Count; j++)
                 {
                     Pipe currentPipe = pipes[j];
-                    if (currentPipe.IsArc)
-                        CreateArc(currentPipe, layerId);
-                    else
-                        CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
-                }
-                foreach (var box in systems[i].Boxes)
-                {
-                    CreateCircle(box.CenterX, box.CenterY, 35, layerId);
+                    //if (currentPipe.IsArc)
+                    //    CreateArc(currentPipe, layerId); //дуг больше нет пока в тестовом режиме
+                    //else
+                    CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
                 }
             }
         }
+
+        private static void CreateCross(double centerX, double centerY, ObjectId layerId)
+        {
+            Point3d center = new Point3d(centerX, centerY, 0);
+
+            double halfLength = 100.0 / 2; // половина 100
+            double angle1 = Math.PI / 4;        // 45°
+            double angle2 = 3 * Math.PI / 4;    // 135°
+
+            // Первая линия (45°)
+            Point3d p1Start = new Point3d(
+                center.X - halfLength * Math.Cos(angle1),
+                center.Y - halfLength * Math.Sin(angle1),
+                0);
+
+            Point3d p1End = new Point3d(
+                center.X + halfLength * Math.Cos(angle1),
+                center.Y + halfLength * Math.Sin(angle1),
+                0);
+
+            CreateLine(p1Start.X, p1Start.Y, p1End.X, p1End.Y, layerId);
+
+            // Вторая линия (135°)
+            Point3d p2Start = new Point3d(
+                center.X - halfLength * Math.Cos(angle2),
+                center.Y - halfLength * Math.Sin(angle2),
+                0);
+
+            Point3d p2End = new Point3d(
+                center.X + halfLength * Math.Cos(angle2),
+                center.Y + halfLength * Math.Sin(angle2),
+                0);
+
+            CreateLine(p2Start.X, p2Start.Y, p2End.X, p2End.Y, layerId);
+        }
+
         private static double AngleXY(Point3d center, Point3d p)
         {
             return Math.Atan2(p.Y - center.Y, p.X - center.X);
