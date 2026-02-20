@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.Windows;
@@ -131,6 +131,21 @@ namespace MeshWelderAutocad
             };
 
             rps.Items.Add(btnLaserEOM);
+
+            //RibbonButton btnMergeLaser = new RibbonButton
+            //{
+            //    Orientation = Orientation.Vertical,
+            //    AllowInStatusBar = true,
+            //    Size = RibbonItemSize.Large,
+            //    Text = "Объединить\nлазер + ЭУИ",
+            //    ShowText = true,
+            //    ToolTip = "Объединение чертежей обычного лазера (НС и ВС) и лазера ЭУИ. Укажите две папки с DXF и папку для результата. Габариты контура (слой «Опалубка») должны совпадать; в результат попадает чертёж лазера плюс слой «Электрика» из ЭУИ.",
+            //    Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
+            //    LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
+            //    CommandHandler = new RelayCommand((_) => Commands.LaserMerge.Command.MergeLaserWithEOM(), (_) => true)
+            //};
+
+            //rps.Items.Add(btnMergeLaser);
 
             return rp;
         }
