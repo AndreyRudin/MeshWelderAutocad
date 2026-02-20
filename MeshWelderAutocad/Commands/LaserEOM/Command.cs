@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
@@ -57,11 +57,10 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                             _modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
                             _layerTable = (LayerTable)tr.GetObject(_db.LayerTableId, OpenMode.ForWrite);
                             CreateFormwork("Опалубка");
-                            CreateLayer(_db, "Электрика");
-                            CreateElectricalSystems("Электрика", _panel.Routes);
-                            CreateBoxes("Электрика", _panel.Boxes);
-                            CreateDetails("Электрика", _panel.Details);
-                            CreateEmbeddedTubes("Электрика", _panel.EmbeddedTubes);
+                            CreateRoutes(_panel.Routes);
+                            CreateBoxes(_panel.Boxes);
+                            CreateDetails(_panel.Details);
+                            CreateEmbeddedTubes(_panel.EmbeddedTubes);
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
@@ -80,21 +79,34 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             }
         }
 
-        private static void CreateBoxes(string layerName, List<Box> boxes)
+        private static ObjectId GetOrCreateLayerId(string layerName)
         {
-            ObjectId layerId = _layerTable[layerName];
+            if (string.IsNullOrWhiteSpace(layerName))
+                layerName = "Электрика";
+            if (_layerTable.Has(layerName))
+                return _layerTable[layerName];
+            LayerTableRecord layer = new LayerTableRecord();
+            layer.Name = layerName;
+            _layerTable.UpgradeOpen();
+            ObjectId id = _layerTable.Add(layer);
+            _activeTransaction.AddNewlyCreatedDBObject(layer, true);
+            return id;
+        }
+
+        private static void CreateBoxes(List<Box> boxes)
+        {
             foreach (var box in boxes)
             {
-                //CreateCircle(box.CenterX, box.CenterY, 35, layerId);
+                ObjectId layerId = GetOrCreateLayerId(box.LayerName);
                 CreateCross(box.CenterX, box.CenterY, layerId);
             }
         }
 
-        private static void CreateEmbeddedTubes(string layerName, List<EmbeddedTube> embeddedTubes)
+        private static void CreateEmbeddedTubes(List<EmbeddedTube> embeddedTubes)
         {
-            ObjectId layerId = _layerTable[layerName];
             foreach (var tube in embeddedTubes)
             {
+                ObjectId layerId = GetOrCreateLayerId(tube.LayerName);
                 if (tube.Diameter == 25)
                 {
                     CreateCross(tube.CenterX, tube.CenterY, layerId);
@@ -107,11 +119,11 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             }
         }
 
-        private static void CreateDetails(string layerName, List<Detail> details)
+        private static void CreateDetails(List<Detail> details)
         {
-            ObjectId layerId = _layerTable[layerName];
             foreach (var detail in details)
             {
+                ObjectId layerId = GetOrCreateLayerId(detail.LayerName);
                 CreateLine(detail.MinX, detail.MinY,
                             detail.MinX, detail.MaxY, layerId);
                 CreateLine(detail.MinX, detail.MaxY,
@@ -122,59 +134,15 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                            detail.MinX, detail.MinY, layerId);
             }
         }
-
-        private static void CreateArcFromTwoPoints(double x1, double y1, double x2, double y2, double radius, ObjectId layerId)
+        private static void CreateRoutes(List<Route> routes)
         {
-            Point3d startPoint = new Point3d(x1, y1, 0);
-            Point3d endPoint = new Point3d(x2, y2, 0);
-
-            Vector3d chordVector = endPoint - startPoint;
-            double chordLength = chordVector.Length;
-
-            Point3d midPoint = new Point3d(
-                (startPoint.X + endPoint.X) / 2.0,
-                (startPoint.Y + endPoint.Y) / 2.0,
-                0);
-
-            double distanceToCenter = Math.Sqrt(radius * radius - (chordLength * chordLength) / 4.0);
-
-            Vector3d perpendicular = new Vector3d(-chordVector.Y, chordVector.X, 0);
-            perpendicular = perpendicular.GetNormal();
-
-            Point3d center = midPoint + perpendicular * distanceToCenter;
-
-            Vector3d startVector = startPoint - center;
-            Vector3d endVector = endPoint - center;
-
-            double startAngle = Math.Atan2(startVector.Y, startVector.X);
-            double endAngle = Math.Atan2(endVector.Y, endVector.X);
-
-            Autodesk.AutoCAD.DatabaseServices.Arc arc =
-                new Autodesk.AutoCAD.DatabaseServices.Arc(
-                    center,          
-                    Vector3d.ZAxis,  
-                    radius,          
-                    startAngle,      
-                    endAngle         
-                );
-
-            arc.LayerId = layerId;
-
-            _modelSpace.AppendEntity(arc);
-            _activeTransaction.AddNewlyCreatedDBObject(arc, true);
-        }
-        private static void CreateElectricalSystems(string layerName, List<Route> systems)
-        {
-            ObjectId layerId = _layerTable[layerName];
-            for (int i = 0; i < systems.Count; i++)
+            for (int i = 0; i < routes.Count; i++)
             {
-                List<Pipe> pipes = systems[i].Pipes;
+                List<Pipe> pipes = routes[i].Pipes;
                 for (int j = 0; j < pipes.Count; j++)
                 {
                     Pipe currentPipe = pipes[j];
-                    //if (currentPipe.IsArc)
-                    //    CreateArc(currentPipe, layerId); //дуг больше нет пока в тестовом режиме
-                    //else
+                    ObjectId layerId = GetOrCreateLayerId(currentPipe.LayerName);
                     CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
                 }
             }

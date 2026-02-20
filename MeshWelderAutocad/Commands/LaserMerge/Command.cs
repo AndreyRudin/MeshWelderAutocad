@@ -12,13 +12,13 @@
 //{
 //    /// <summary>
 //    /// Объединение чертежей обычного лазера (НС и ВС панели) и лазера ЭУИ:
-//    /// база — DXF из папки обычного лазера, в неё добавляются объекты со слоя "Электрика" из DXF лазера ЭУИ.
+//    /// база — DXF из папки обычного лазера, в неё добавляются объекты из DXF лазера ЭУИ со всех слоёв, кроме "0" и "Опалубка".
 //    /// Габариты контура панели (слой "Опалубка") должны совпадать.
 //    /// </summary>
 //    internal class Command
 //    {
 //        private const string LayerFormwork = "Опалубка";
-//        private const string LayerElectrical = "Электрика";
+//        private const string LayerZero = "0";
 //        /// <summary> Полное совпадение габаритов (без допуска). </summary>
 //        private const double ExtentsTolerance = 0.0;
 
@@ -222,16 +222,10 @@
 //                        return false;
 //                    }
 
-//                    if (!DatabaseHasLayer(eomDatabase, LayerElectrical))
+//                    ObjectIdCollection entityIdsToCopy = GetEntityIdsOnLayersOtherThan(eomDatabase, LayerZero, LayerFormwork);
+//                    if (entityIdsToCopy.Count == 0)
 //                    {
-//                        error = "В чертеже ЭУИ отсутствует слой «Электрика».";
-//                        return false;
-//                    }
-
-//                    ObjectIdCollection electricalEntityIds = GetEntityIdsOnLayer(eomDatabase, LayerElectrical);
-//                    if (electricalEntityIds.Count == 0)
-//                    {
-//                        error = "В чертеже ЭУИ на слое «Электрика» нет объектов (нет электрики).";
+//                        error = "В чертеже ЭУИ нет объектов на слоях, отличных от 0 и Опалубка.";
 //                        return false;
 //                    }
 
@@ -243,7 +237,7 @@
 //                        transaction.Commit();
 //                    }
 //                    IdMapping idMapping = new IdMapping();
-//                    eomDatabase.WblockCloneObjects(electricalEntityIds, modelSpaceId, idMapping, DuplicateRecordCloning.Replace, false);
+//                    eomDatabase.WblockCloneObjects(entityIdsToCopy, modelSpaceId, idMapping, DuplicateRecordCloning.Replace, false);
 
 //                    laserDatabase.DxfOut(outputPath, 12, DwgVersion.AC1024);
 //                    return true;
@@ -324,28 +318,14 @@
 //        }
 
 //        /// <summary>
-//        /// Проверяет, есть ли в чертеже слой с заданным именем.
+//        /// Возвращает идентификаторы объектов из модели, лежащих на слоях, отличных от указанных.
 //        /// </summary>
-//        private static bool DatabaseHasLayer(Database database, string layerName)
+//        private static ObjectIdCollection GetEntityIdsOnLayersOtherThan(Database database, params string[] excludedLayerNames)
 //        {
-//            using (Transaction transaction = database.TransactionManager.StartTransaction())
-//            {
-//                LayerTable layerTable = transaction.GetObject(database.LayerTableId, OpenMode.ForRead) as LayerTable;
-//                foreach (ObjectId layerId in layerTable)
-//                {
-//                    LayerTableRecord layerTableRecord = transaction.GetObject(layerId, OpenMode.ForRead) as LayerTableRecord;
-//                    if (layerTableRecord != null && string.Equals(layerTableRecord.Name, layerName, StringComparison.OrdinalIgnoreCase))
-//                    {
-//                        return true;
-//                    }
-//                }
-//                transaction.Commit();
-//            }
-//            return false;
-//        }
+//            HashSet<string> excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+//            foreach (string name in excludedLayerNames)
+//                excluded.Add(name ?? string.Empty);
 
-//        private static ObjectIdCollection GetEntityIdsOnLayer(Database database, string layerName)
-//        {
 //            ObjectIdCollection entityIds = new ObjectIdCollection();
 //            using (Transaction transaction = database.TransactionManager.StartTransaction())
 //            {
@@ -358,8 +338,9 @@
 //                    Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
 //                    if (entity == null) continue;
 //                    string entityLayerName = GetLayerName(transaction, layerTable, entity.LayerId);
-//                    if (string.Equals(entityLayerName, layerName, StringComparison.OrdinalIgnoreCase))
-//                        entityIds.Add(objectId);
+//                    if (string.IsNullOrEmpty(entityLayerName) || excluded.Contains(entityLayerName))
+//                        continue;
+//                    entityIds.Add(objectId);
 //                }
 //                transaction.Commit();
 //            }

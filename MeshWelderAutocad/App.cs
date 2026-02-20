@@ -139,7 +139,7 @@ namespace MeshWelderAutocad
             //    Size = RibbonItemSize.Large,
             //    Text = "Объединить\nлазер + ЭУИ",
             //    ShowText = true,
-            //    ToolTip = "Объединение чертежей обычного лазера (НС и ВС) и лазера ЭУИ. Укажите две папки с DXF и папку для результата. Габариты контура (слой «Опалубка») должны совпадать; в результат попадает чертёж лазера плюс слой «Электрика» из ЭУИ.",
+            //    ToolTip = "Объединение чертежей обычного лазера (НС и ВС) и лазера ЭУИ. Укажите две папки с DXF и папку для результата. Габариты контура (слой «Опалубка») должны совпадать; в результат попадает чертёж лазера плюс объекты из ЭУИ со всех слоёв, кроме 0 и Опалубка.",
             //    Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
             //    LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
             //    CommandHandler = new RelayCommand((_) => Commands.LaserMerge.Command.MergeLaserWithEOM(), (_) => true)
