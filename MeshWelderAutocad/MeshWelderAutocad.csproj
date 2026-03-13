@@ -184,6 +184,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Commands\LaserPT\" />
+    <Folder Include="Commands\LaserVS\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>XCOPY /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\MeshWelder.bundle\Content\"</PostBuildEvent>
