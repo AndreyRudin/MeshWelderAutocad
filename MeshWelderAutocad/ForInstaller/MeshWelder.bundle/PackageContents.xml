@@ -3,21 +3,21 @@
                     AutodeskProduct="BP_PanelTools_ACAD"
                     ProductType="Application"
                     Name="BP_PanelTools_ACAD">
-  <Components>
-    <ComponentEntry AppName="BP_PanelTools_ACAD"
-                    Version="1.0"
-                    ModuleName="./Content/MeshWelderAutocad.dll"
-                    AppDescription="Execute Assembly"
-                    LoadOnAutoCADStartup="True"
-                    LoadOnCommandInvocation="True" 
-                    LoadOnRequest="True">
-      <Commands>
-        <Command Local="CreateMesh" Global="CreateMesh"/>
-        <Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
-        <Command Local="CreateDrawingsForLaserEOM" Global="CreateDrawingsForLaserEOM"/>
-		    <Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
-      </Commands>
-    </ComponentEntry>
-    <RuntimeRequirements Platform="AutoCAD*" SeriesMin="R11.0" SeriesMax="R25.0"/>
-  </Components>
+	<Components>
+		<ComponentEntry AppName="BP_PanelTools_ACAD"
+						Version="1.0"
+						ModuleName="./Content/MeshWelderAutocad.dll"
+						AppDescription="Execute Assembly"
+						LoadOnAutoCADStartup="True"
+						LoadOnCommandInvocation="True"
+						LoadOnRequest="True">
+			<Commands>
+				<Command Local="CreateMesh" Global="CreateMesh"/>
+				<Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
+				<Command Local="CreateDrawingsForLaserEOM" Global="CreateDrawingsForLaserEOM"/>
+				<Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
+			</Commands>
+		</ComponentEntry>
+		<RuntimeRequirements Platform="AutoCAD*" SeriesMin="R11.0" SeriesMax="R25.0"/>
+	</Components>
 </ApplicationPackage>

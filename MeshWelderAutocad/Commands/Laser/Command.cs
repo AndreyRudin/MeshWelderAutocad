@@ -1,5 +1,6 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using MeshWelderAutocad.Commands.Laser.Dtos;
@@ -56,6 +57,7 @@ namespace MeshWelderAutocad.Commands.Laser
 
                     using (DocumentLock docLock = newDoc.LockDocument())
                     {
+                        _db.Insunits = UnitsValue.Millimeters;
                         using (Transaction tr = _db.TransactionManager.StartTransaction())
                         {
                             _activeTransaction = tr;

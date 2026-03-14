@@ -50,6 +50,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
 
                     using (DocumentLock docLock = newDoc.LockDocument())
                     {
+                        _db.Insunits = UnitsValue.Millimeters;
                         using (Transaction tr = _db.TransactionManager.StartTransaction())
                         {
                             _activeTransaction = tr;
@@ -67,7 +68,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                     }
                     newDoc.CloseAndDiscard();
                 }
-                //File.Delete(jsonFilePath); //TODO1 после дебага удаляь
+                File.Delete(jsonFilePath);
             }
             catch (CustomException e)
             {

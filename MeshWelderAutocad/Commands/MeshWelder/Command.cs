@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -88,6 +88,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
 
                     using (DocumentLock docLock = newDoc.LockDocument())
                     {
+                        db.Insunits = UnitsValue.Millimeters;
                         CreateLayer(db, "MESH");
                         using (Transaction tr = db.TransactionManager.StartTransaction())
                         {
@@ -168,7 +169,7 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 return Autodesk.AutoCAD.Colors.Color.FromRgb(color.Red, color.Green, color.Blue);
             }
         }
-        
+
         public static void CreateLayer(Database db, string name)
         {
             using (Transaction tr = db.TransactionManager.StartTransaction())
