@@ -190,6 +190,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>XCOPY /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\MeshWelder.bundle\Content\"</PostBuildEvent>
+    <PostBuildEvent>
+XCOPY /Y "$(TargetDir)*.dll" "$(ProjectDir)ForInstaller\MeshWelder.bundle\Content\"
+XCOPY /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\MeshWelder.bundle\Content\"
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
