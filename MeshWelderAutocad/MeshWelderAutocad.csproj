@@ -112,6 +112,8 @@
     <Compile Include="Commands\LaserMerge\Command.cs" />
     <Compile Include="Commands\Laser\Command.cs" />
     <Compile Include="Commands\Laser\Dtos\Data.cs" />
+    <Compile Include="Commands\LaserPT\Command.cs" />
+    <Compile Include="Commands\LaserPT\Data.cs" />
     <Compile Include="Commands\MeshWelder\Command.cs" />
     <Compile Include="App.cs" />
     <Compile Include="Commands\Settings\Models\Color.cs" />
@@ -191,7 +193,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
-XCOPY /Y "$(TargetDir)*.dll" "$(ProjectDir)ForInstaller\MeshWelder.bundle\Content\"
+XCOPY /Y /I /E "$(TargetDir)*" "$(ProjectDir)ForInstaller\MeshWelder.bundle\Content\"
 XCOPY /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\MeshWelder.bundle\Content\"
     </PostBuildEvent>
   </PropertyGroup>

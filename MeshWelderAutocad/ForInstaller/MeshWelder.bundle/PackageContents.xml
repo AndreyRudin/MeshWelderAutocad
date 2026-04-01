@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ApplicationPackage SchemaVersion="1.0"
                     AutodeskProduct="BP_PanelTools_ACAD"
                     ProductType="Application"
@@ -15,6 +15,7 @@
 				<Command Local="CreateMesh" Global="CreateMesh"/>
 				<Command Local="CreateDrawingsForLaser" Global="CreateDrawingsForLaser"/>
 				<Command Local="CreateDrawingsForLaserEOM" Global="CreateDrawingsForLaserEOM"/>
+				<Command Local="CreateDrawingsForLaserPT" Global="CreateDrawingsForLaserPT"/>
 				<Command Local="InitMeshWelder" Global="InitMeshWelder" LoadOnAutoCADStartup="True" StartupCommand="True" />
 			</Commands>
 		</ComponentEntry>

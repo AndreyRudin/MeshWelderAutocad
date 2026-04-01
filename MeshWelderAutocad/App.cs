@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using RibbonButton = Autodesk.Windows.RibbonButton;
 using RibbonPanelSource = Autodesk.Windows.RibbonPanelSource;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
+using System.IO;
 
 namespace MeshWelderAutocad
 {
@@ -107,7 +108,7 @@ namespace MeshWelderAutocad
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
                 Size = RibbonItemSize.Large,
-                Text = "Разметка\nдля проектора",
+                Text = "Разметка НС\nдля проектора",
                 ShowText = true,
                 ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
                 Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
@@ -132,6 +133,21 @@ namespace MeshWelderAutocad
 
             rps.Items.Add(btnLaserEOM);
 
+            RibbonButton btnLaserPT = new RibbonButton
+            {
+                Orientation = Orientation.Vertical,
+                AllowInStatusBar = true,
+                Size = RibbonItemSize.Large,
+                Text = "Разметка ПТ\nдля проектора",
+                ShowText = true,
+                ToolTip = "Обрабатывает JSON и строит контур панели, петли, карманы и вырезы по слоям.",
+                Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
+                LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
+                CommandHandler = new RelayCommand((_) => Commands.LaserPT.Command.CreateDrawingsForLaserPT(), (_) => true)
+            };
+
+            rps.Items.Add(btnLaserPT);
+
             RibbonButton btnMergeLaser = new RibbonButton
             {
                 Orientation = Orientation.Vertical,
@@ -151,7 +167,7 @@ namespace MeshWelderAutocad
         }
         private static RibbonPanel AddInfoPanel()
         {
-            string versionDate = "v26.03.15";
+            string versionDate = GetBuildDateText();
             var rps = new RibbonPanelSource();
             rps.Title = "    INFO    ";
             RibbonPanel rp = new RibbonPanel();
@@ -172,6 +188,19 @@ namespace MeshWelderAutocad
             rps.Items.Add(btnDevelopers);
 
             return rp;
+        }
+        private static string GetBuildDateText()
+        {
+            try
+            {
+                string assemblyPath = typeof(App).Assembly.Location;
+                DateTime buildDate = File.GetLastWriteTime(assemblyPath);
+                return "v" + buildDate.ToString("yy.MM.dd");
+            }
+            catch
+            {
+                return "vunknown";
+            }
         }
         private static ImageSource GetImageSourceByBitMapFromResource(Bitmap source)
         {
