@@ -73,6 +73,17 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
                 string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
                 string generalDwgDirectory = Path.Combine(jsonDirectory, $"{meshs[0].RevitModelName}_DWG-{timeStamp}");
+                var plannedDxfPaths = new List<string>();
+                foreach (var mesh in meshs)
+                {
+                    string directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
+                    plannedDxfPaths.Add(Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf"));
+                }
+                if (!ExportPathValidation.TryValidateDxfOutputPaths(plannedDxfPaths, out string pathLengthError))
+                {
+                    MessageBox.Show(pathLengthError, "Ошибка");
+                    return;
+                }
                 Directory.CreateDirectory(generalDwgDirectory);
 
                 string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");

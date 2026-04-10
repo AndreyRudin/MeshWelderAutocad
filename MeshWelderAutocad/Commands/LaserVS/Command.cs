@@ -43,7 +43,19 @@ namespace MeshWelderAutocad.Commands.LaserVS
                     return;
 
                 DataVsDto data = GetData(jsonFilePath);
-                string generalDwgDirectory = CreateDirectoryForDrawings(jsonFilePath, "LaserVS");
+                string generalDwgDirectory = GetOutputDrawingsDirectoryPath(jsonFilePath, "LaserVS");
+                var plannedDxfPaths = new List<string>();
+                foreach (PanelVsDto panel in data.Panels)
+                {
+                    string panelName = GetSafeFileName(string.IsNullOrWhiteSpace(panel.AssemblyName) ? "PanelVS" : panel.AssemblyName);
+                    plannedDxfPaths.Add(Path.Combine(generalDwgDirectory, $"{panelName}.dxf"));
+                }
+                if (!ExportPathValidation.TryValidateDxfOutputPaths(plannedDxfPaths, out string pathLengthError))
+                {
+                    MessageBox.Show(pathLengthError, "Ошибка");
+                    return;
+                }
+                Directory.CreateDirectory(generalDwgDirectory);
                 string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
                 string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
 
@@ -240,13 +252,11 @@ namespace MeshWelderAutocad.Commands.LaserVS
             _activeTransaction.AddNewlyCreatedDBObject(line, true);
         }
 
-        private static string CreateDirectoryForDrawings(string jsonFilePath, string drawingsName)
+        private static string GetOutputDrawingsDirectoryPath(string jsonFilePath, string drawingsName)
         {
             string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
             string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string generalDwgDirectory = Path.Combine(jsonDirectory, $"{drawingsName}_DWG-{timeStamp}");
-            Directory.CreateDirectory(generalDwgDirectory);
-            return generalDwgDirectory;
+            return Path.Combine(jsonDirectory, $"{drawingsName}_DWG-{timeStamp}");
         }
 
         private static string GetSafeFileName(string fileName)

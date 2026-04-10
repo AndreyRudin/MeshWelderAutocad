@@ -42,7 +42,16 @@ namespace MeshWelderAutocad.Commands.Laser
                     return;
                 }
                 Data data = GetData(jsonFilePath);
-                string generalDwgDirectory = CreateDirectoryForDrawings(jsonFilePath, data.RevitFileName);
+                string generalDwgDirectory = GetOutputDrawingsDirectoryPath(jsonFilePath, data.RevitFileName);
+                var plannedDxfPaths = new List<string>();
+                foreach (var panel in data.Panels)
+                    plannedDxfPaths.Add(Path.Combine(generalDwgDirectory, $"{panel.Name}.dxf"));
+                if (!ExportPathValidation.TryValidateDxfOutputPaths(plannedDxfPaths, out string pathLengthError))
+                {
+                    MessageBox.Show(pathLengthError, "Ошибка");
+                    return;
+                }
+                Directory.CreateDirectory(generalDwgDirectory);
 
                 string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
                 string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
@@ -420,13 +429,11 @@ namespace MeshWelderAutocad.Commands.Laser
                 tr.Dispose();
             }
         }
-        private static string CreateDirectoryForDrawings(string jsonFilePath, string revitFileName)
+        private static string GetOutputDrawingsDirectoryPath(string jsonFilePath, string revitFileName)
         {
             string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
             string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string generalDwgDirectory = Path.Combine(jsonDirectory, $"{revitFileName}_DWG-{timeStamp}");
-            Directory.CreateDirectory(generalDwgDirectory);
-            return generalDwgDirectory;
+            return Path.Combine(jsonDirectory, $"{revitFileName}_DWG-{timeStamp}");
         }
 
         private static Data GetData(string jsonFilePath)

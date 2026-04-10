@@ -16,10 +16,10 @@ namespace MeshWelderAutocad.Commands.LaserPT
 {
     internal class Command
     {
-        private const string FormworkLayerName = "Опалубка";
-        private const string LoopsLayerName = "Петли";
-        private const string PocketsLayerName = "Карманы";
-        private const string OpeningsLayerName = "Вырезы";
+        private const string FormworkLayerName = "РћРїР°Р»СѓР±РєР°";
+        private const string LoopsLayerName = "РџРµС‚Р»Рё";
+        private const string PocketsLayerName = "РљР°СЂРјР°РЅС‹";
+        private const string OpeningsLayerName = "Р’С‹СЂРµР·С‹";
         private const double LoopCrossLineLength = 300.0;
 
         private static PanelPtDto _panel;
@@ -38,7 +38,19 @@ namespace MeshWelderAutocad.Commands.LaserPT
                     return;
 
                 DataPtDto data = GetData(jsonFilePath);
-                string generalDwgDirectory = CreateDirectoryForDrawings(jsonFilePath, "LaserPT");
+                string generalDwgDirectory = GetOutputDrawingsDirectoryPath(jsonFilePath, "LaserPT");
+                var plannedDxfPaths = new List<string>();
+                foreach (PanelPtDto panel in data.Panels)
+                {
+                    string panelName = GetSafeFileName(string.IsNullOrWhiteSpace(panel.AssemblyName) ? "PanelPT" : panel.AssemblyName);
+                    plannedDxfPaths.Add(Path.Combine(generalDwgDirectory, $"{panelName}.dxf"));
+                }
+                if (!ExportPathValidation.TryValidateDxfOutputPaths(plannedDxfPaths, out string pathLengthError))
+                {
+                    MessageBox.Show(pathLengthError, "РћС€РёР±РєР°");
+                    return;
+                }
+                Directory.CreateDirectory(generalDwgDirectory);
                 string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
                 string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
 
@@ -74,11 +86,11 @@ namespace MeshWelderAutocad.Commands.LaserPT
             }
             catch (CustomException e)
             {
-                MessageBox.Show(e.Message, "Ошибка");
+                MessageBox.Show(e.Message, "РћС€РёР±РєР°");
             }
             catch (System.Exception e)
             {
-                MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
+                MessageBox.Show(e.Message + e.StackTrace, "РЎРёСЃС‚РµРјРЅР°СЏ РѕС€РёР±РєР°");
             }
         }
 
@@ -148,13 +160,11 @@ namespace MeshWelderAutocad.Commands.LaserPT
             _activeTransaction.AddNewlyCreatedDBObject(line, true);
         }
 
-        private static string CreateDirectoryForDrawings(string jsonFilePath, string drawingsName)
+        private static string GetOutputDrawingsDirectoryPath(string jsonFilePath, string drawingsName)
         {
             string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
             string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
-            string generalDwgDirectory = Path.Combine(jsonDirectory, $"{drawingsName}_DWG-{timeStamp}");
-            Directory.CreateDirectory(generalDwgDirectory);
-            return generalDwgDirectory;
+            return Path.Combine(jsonDirectory, $"{drawingsName}_DWG-{timeStamp}");
         }
 
         private static string GetSafeFileName(string fileName)
@@ -171,12 +181,12 @@ namespace MeshWelderAutocad.Commands.LaserPT
             {
                 DataPtDto data = JsonConvert.DeserializeObject<DataPtDto>(jsonContent);
                 if (data == null)
-                    throw new CustomException("Некорректный JSON. Требуется выбрать корректный файл");
+                    throw new CustomException("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ JSON. РўСЂРµР±СѓРµС‚СЃСЏ РІС‹Р±СЂР°С‚СЊ РєРѕСЂСЂРµРєС‚РЅС‹Р№ С„Р°Р№Р»");
                 return data;
             }
             catch (JsonException ex)
             {
-                throw new CustomException("Ошибка при чтении JSON: " + ex.Message);
+                throw new CustomException("РћС€РёР±РєР° РїСЂРё С‡С‚РµРЅРёРё JSON: " + ex.Message);
             }
         }
 

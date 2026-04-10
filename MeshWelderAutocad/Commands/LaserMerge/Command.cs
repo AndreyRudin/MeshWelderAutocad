@@ -50,7 +50,6 @@ namespace MeshWelderAutocad.Commands.LaserMerge
 
                 string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
                 string outputRoot = Path.Combine(outputFolder, $"LaserMerge_DWG-{timeStamp}");
-                Directory.CreateDirectory(outputRoot);
 
                 List<string> structuralLaserDxfPaths = GetDxfPathsRecursive(structuralLaserFolder);
                 if (structuralLaserDxfPaths.Count == 0)
@@ -65,6 +64,21 @@ namespace MeshWelderAutocad.Commands.LaserMerge
                     MessageBox.Show("В папке лазера электрики не найдено файлов DXF.", "Ошибка");
                     return;
                 }
+
+                List<string> plannedMergeDxfPaths = CollectPlannedMergeDxfOutputPaths(outputRoot, structuralLaserDxfPaths, electricalLaserDxfPaths);
+                if (!ExportPathValidation.TryValidateDxfOutputPaths(plannedMergeDxfPaths, out string mergeDxfPathError))
+                {
+                    MessageBox.Show(mergeDxfPathError, "Ошибка");
+                    return;
+                }
+                string reportPath = Path.Combine(outputRoot, "Laser_EOM_Merge_Report.txt");
+                if (!ExportPathValidation.TryValidateTextReportOutputFilePath(reportPath, out string mergeReportPathError))
+                {
+                    MessageBox.Show(mergeReportPathError, "Ошибка");
+                    return;
+                }
+
+                Directory.CreateDirectory(outputRoot);
 
                 int processed = 0;
                 int skippedNoPair = 0;
@@ -112,7 +126,6 @@ namespace MeshWelderAutocad.Commands.LaserMerge
 
                 electricalLaserFilesWithoutPair.AddRange(electricalLaserDxfPaths.Where(p => !usedElectricalLaserRelativePaths.Contains(p)));
 
-                string reportPath = Path.Combine(outputRoot, "Laser_EOM_Merge_Report.txt");
                 WriteReportFile(reportPath, structuralLaserFilesWithoutPair, electricalLaserFilesWithoutPair, processed, skippedNoPair, skippedExtentMismatch, errors);
 
                 string message;
@@ -235,6 +248,31 @@ namespace MeshWelderAutocad.Commands.LaserMerge
                     result.Add(electricalLaserRelativePath);
             }
             return result;
+        }
+
+        /// <summary>
+        /// Полные пути итоговых DXF до начала объединения — для проверки длины пути Windows.
+        /// </summary>
+        private static List<string> CollectPlannedMergeDxfOutputPaths(
+            string outputRoot,
+            List<string> structuralLaserDxfPaths,
+            List<string> electricalLaserDxfPaths)
+        {
+            var list = new List<string>();
+            foreach (string structuralLaserRelativePath in structuralLaserDxfPaths)
+            {
+                string structuralLaserFileName = Path.GetFileName(structuralLaserRelativePath);
+                string structuralLaserNameNoExt = Path.GetFileNameWithoutExtension(structuralLaserFileName);
+                List<string> matchingElectricalPaths = FindMatchingElectricalLaserFiles(structuralLaserFileName, electricalLaserDxfPaths);
+                foreach (string electricalLaserRelativePath in matchingElectricalPaths)
+                {
+                    string electricalLaserFileName = Path.GetFileName(electricalLaserRelativePath);
+                    string electricalLaserNameNoExt = Path.GetFileNameWithoutExtension(electricalLaserFileName);
+                    string outputFileName = $"{structuralLaserNameNoExt}_{electricalLaserNameNoExt}.dxf";
+                    list.Add(Path.Combine(outputRoot, outputFileName));
+                }
+            }
+            return list;
         }
 
         private static List<string> GetDxfPathsRecursive(string root)

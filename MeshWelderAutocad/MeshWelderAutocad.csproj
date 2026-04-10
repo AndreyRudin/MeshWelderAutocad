@@ -144,6 +144,7 @@
       <DependentUpon>Resource.resx</DependentUpon>
     </Compile>
     <Compile Include="Utils\CustomException.cs" />
+    <Compile Include="Utils\ExportPathValidation.cs" />
     <Compile Include="WPF\BaseViewModel.cs" />
     <Compile Include="WPF\Command.cs" />
     <Compile Include="WPF\LambdaCommand.cs" />
