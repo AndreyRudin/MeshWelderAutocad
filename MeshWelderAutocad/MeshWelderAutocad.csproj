@@ -114,6 +114,8 @@
     <Compile Include="Commands\Laser\Dtos\Data.cs" />
     <Compile Include="Commands\LaserPT\Command.cs" />
     <Compile Include="Commands\LaserPT\Data.cs" />
+    <Compile Include="Commands\LaserVS\Command.cs" />
+    <Compile Include="Commands\LaserVS\Data.cs" />
     <Compile Include="Commands\MeshWelder\Command.cs" />
     <Compile Include="App.cs" />
     <Compile Include="Commands\Settings\Models\Color.cs" />
