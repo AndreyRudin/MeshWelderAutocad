@@ -103,7 +103,7 @@ namespace MeshWelderAutocad
             RibbonPanel rp = new RibbonPanel();
             rp.Source = rps;
 
-            RibbonButton btnLaser = new RibbonButton
+            RibbonButton btnLaserNS = new RibbonButton
             {
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
@@ -115,23 +115,21 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
                 CommandHandler = new RelayCommand((_) => Commands.Laser.Command.CreateDrawingsForLaser(), (_) => true)
             };
+            rps.Items.Add(btnLaserNS);
 
-            rps.Items.Add(btnLaser);
-
-            RibbonButton btnLaserEOM = new RibbonButton
-            {
-                Orientation = Orientation.Vertical,
-                AllowInStatusBar = true,
-                Size = RibbonItemSize.Large,
-                Text = "Электроразметка\nдля проектора",
-                ShowText = true,
-                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
-                Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
-                LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
-                CommandHandler = new RelayCommand((_) => Commands.LaserEOM.Command.CreateDrawingsForLaserEOM(), (_) => true)
-            };
-
-            rps.Items.Add(btnLaserEOM);
+            //RibbonButton btnLaserVS = new RibbonButton
+            //{
+            //    Orientation = Orientation.Vertical,
+            //    AllowInStatusBar = true,
+            //    Size = RibbonItemSize.Large,
+            //    Text = "Разметка ВС\nдля проектора",
+            //    ShowText = true,
+            //    ToolTip = "Обрабатывает JSON (LaserVS из Revit): опалубка — контур и крупные отверстия, вырезы — мелкие проёмы, анкеры, петли, карманы и закладные по типам на отдельных слоях.",
+            //    Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
+            //    LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
+            //    CommandHandler = new RelayCommand((_) => Commands.LaserVS.Command.CreateDrawingsForLaserVS(), (_) => true)
+            //};
+            //rps.Items.Add(btnLaserVS);
 
             RibbonButton btnLaserPT = new RibbonButton
             {
@@ -145,23 +143,21 @@ namespace MeshWelderAutocad
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
                 CommandHandler = new RelayCommand((_) => Commands.LaserPT.Command.CreateDrawingsForLaserPT(), (_) => true)
             };
-
             rps.Items.Add(btnLaserPT);
 
-            RibbonButton btnLaserVS = new RibbonButton
+            RibbonButton btnLaserEOM = new RibbonButton
             {
                 Orientation = Orientation.Vertical,
                 AllowInStatusBar = true,
                 Size = RibbonItemSize.Large,
-                Text = "Разметка ВС\nдля проектора",
+                Text = "Электроразметка\nдля проектора",
                 ShowText = true,
-                ToolTip = "Обрабатывает JSON (LaserVS из Revit): опалубка — контур и крупные отверстия, вырезы — мелкие проёмы, анкеры, петли, карманы и закладные по типам на отдельных слоях.",
+                ToolTip = "подсказка пока не создана, обратитесь к BIM менеджеру",
                 Image = GetImageSourceByBitMapFromResource(Resource.Laser_16x16),
                 LargeImage = GetImageSourceByBitMapFromResource(Resource.Laser_32x32),
-                CommandHandler = new RelayCommand((_) => Commands.LaserVS.Command.CreateDrawingsForLaserVS(), (_) => true)
+                CommandHandler = new RelayCommand((_) => Commands.LaserEOM.Command.CreateDrawingsForLaserEOM(), (_) => true)
             };
-
-            rps.Items.Add(btnLaserVS);
+            rps.Items.Add(btnLaserEOM);
 
             RibbonButton btnMergeLaser = new RibbonButton
             {
