@@ -22,6 +22,11 @@ namespace MeshWelderAutocad.Commands.LaserPT
         private const string OpeningsLayerName = "Вырезы";
         private const double LoopCrossLineLength = 300.0;
 
+        private static readonly short[] EmbeddedDetailColorCycle =
+        {
+            30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200
+        };
+
         private static PanelPtDto _panel;
         private static Transaction _activeTransaction;
         private static LayerTable _layerTable;
@@ -76,6 +81,7 @@ namespace MeshWelderAutocad.Commands.LaserPT
                             CreateLoops();
                             CreatePockets();
                             CreateOpenings();
+                            CreateEmbeddedDetails();
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
@@ -123,6 +129,24 @@ namespace MeshWelderAutocad.Commands.LaserPT
             ObjectId layerId = GetOrCreateLayerId(OpeningsLayerName, 1);
             foreach (List<Line2Dto> opening in _panel.OpeningsLines)
                 CreateLines(opening, layerId);
+        }
+
+        /// <summary>Закладные по слоям из JSON (аналогично лазеру ВС).</summary>
+        private static void CreateEmbeddedDetails()
+        {
+            if (_panel.EmbeddedDetails == null || _panel.EmbeddedDetails.Count == 0)
+                return;
+            int colorIx = 0;
+            foreach (KeyValuePair<string, List<Line2Dto>> entry in _panel.EmbeddedDetails)
+            {
+                string layerName = string.IsNullOrWhiteSpace(entry.Key) ? "ЗД" : entry.Key.Trim();
+                if (entry.Value == null || entry.Value.Count == 0)
+                    continue;
+                short color = EmbeddedDetailColorCycle[colorIx % EmbeddedDetailColorCycle.Length];
+                colorIx++;
+                ObjectId layerId = GetOrCreateLayerId(layerName, color);
+                CreateLines(entry.Value, layerId);
+            }
         }
 
         private static void CreateLines(IEnumerable<Line2Dto> lines, ObjectId layerId)

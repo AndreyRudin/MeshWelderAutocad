@@ -23,6 +23,9 @@ namespace MeshWelderAutocad.Commands.LaserPT
         public List<Point2Dto> Loops { get; set; } = new List<Point2Dto>();
         [DataMember]
         public List<List<Line2Dto>> Pockets { get; set; } = new List<List<Line2Dto>>();
+        /// <summary>Слой → сегменты линий (как в JSON лазера ПТ/ВС: ключи «ЗД», «ЗД 1.5», …).</summary>
+        [DataMember]
+        public Dictionary<string, List<Line2Dto>> EmbeddedDetails { get; set; } = new Dictionary<string, List<Line2Dto>>();
     }
 
     [DataContract]
