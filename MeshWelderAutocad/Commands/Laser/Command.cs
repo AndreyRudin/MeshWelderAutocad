@@ -94,6 +94,7 @@ namespace MeshWelderAutocad.Commands.Laser
                                 CreateEmbeddedDetail11($"ЗД 1.11");
                             if (_panel.UnionDetails.Count != 0)
                                 CreateEmbeddedDetail($"Объединенные ЗД", _panel.UnionDetails);
+                            RotateModelSpaceCounterClockwiseAndMoveTo500();
                             tr.Commit();
                         }
                         newDoc.Database.DxfOut(path, 12, DwgVersion.AC1024);
@@ -110,6 +111,64 @@ namespace MeshWelderAutocad.Commands.Laser
             {
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
             }
+        }
+        private static void RotateModelSpaceCounterClockwiseAndMoveTo500()
+        {
+            const double targetX = 500.0;
+            const double targetY = 500.0;
+            // 1) Поворот на +90° вокруг (0,0,0)
+            Matrix3d rotation = Matrix3d.Rotation(Math.PI / 2.0, Vector3d.ZAxis, Point3d.Origin);
+            TransformAllModelSpaceEntities(rotation);
+            // 2) Габарит опалубки после поворота
+            if (!TryGetFormworkExtents(out Extents3d formworkExtents))
+                return;
+            // 3) Смещение так, чтобы нижняя левая точка опалубки стала (500,500)
+            Vector3d move = new Vector3d(
+                targetX - formworkExtents.MinPoint.X,
+                targetY - formworkExtents.MinPoint.Y,
+                0);
+            TransformAllModelSpaceEntities(Matrix3d.Displacement(move));
+        }
+        private static void TransformAllModelSpaceEntities(Matrix3d transform)
+        {
+            foreach (ObjectId id in _modelSpace)
+            {
+                Entity entity = _activeTransaction.GetObject(id, OpenMode.ForWrite) as Entity;
+                if (entity == null)
+                    continue;
+                entity.TransformBy(transform);
+            }
+        }
+        private static bool TryGetFormworkExtents(out Extents3d extents)
+        {
+            extents = default;
+            bool hasAny = false;
+            foreach (ObjectId id in _modelSpace)
+            {
+                Entity entity = _activeTransaction.GetObject(id, OpenMode.ForRead) as Entity;
+                if (entity == null)
+                    continue;
+                // Берем габарит только по слою опалубки
+                if (!string.Equals(entity.Layer, "Опалубка", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                try
+                {
+                    if (!hasAny)
+                    {
+                        extents = entity.GeometricExtents;
+                        hasAny = true;
+                    }
+                    else
+                    {
+                        extents.AddExtents(entity.GeometricExtents);
+                    }
+                }
+                catch
+                {
+                    // У части примитивов GeometricExtents может не поддерживаться
+                }
+            }
+            return hasAny;
         }
 
         private static void CreateUnionDetails(string layerName)
