@@ -20,6 +20,8 @@ namespace MeshWelderAutocad.Commands.LaserPT
         [DataMember]
         public List<List<Line2Dto>> OpeningsLines { get; set; } = new List<List<Line2Dto>>();
         [DataMember]
+        public List<List<CurveDto>> RoundOpenings { get; set; } = new List<List<CurveDto>>();
+        [DataMember]
         public List<Point2Dto> Loops { get; set; } = new List<Point2Dto>();
         [DataMember]
         public List<List<Line2Dto>> Pockets { get; set; } = new List<List<Line2Dto>>();
@@ -44,5 +46,24 @@ namespace MeshWelderAutocad.Commands.LaserPT
         public Point2Dto Start { get; set; }
         [DataMember]
         public Point2Dto End { get; set; }
+    }
+
+    [DataContract]
+    internal class CurveDto
+    {
+        [DataMember]
+        public CurveDtoKind Kind { get; set; }
+        [DataMember]
+        public Point2Dto Start { get; set; }
+        [DataMember]
+        public Point2Dto End { get; set; }
+        [DataMember]
+        public Point2Dto PointOnArc { get; set; }
+    }
+
+    internal enum CurveDtoKind
+    {
+        Line = 0,
+        Arc = 1,
     }
 }

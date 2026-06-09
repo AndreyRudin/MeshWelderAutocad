@@ -129,6 +129,10 @@ namespace MeshWelderAutocad.Commands.LaserPT
             ObjectId layerId = GetOrCreateLayerId(OpeningsLayerName, 1);
             foreach (List<Line2Dto> opening in _panel.OpeningsLines)
                 CreateLines(opening, layerId);
+            if (_panel.RoundOpenings == null)
+                return;
+            foreach (List<CurveDto> roundOpening in _panel.RoundOpenings)
+                CreateCurves(roundOpening, layerId);
         }
 
         /// <summary>Закладные по слоям из JSON (аналогично лазеру ВС).</summary>
@@ -159,6 +163,66 @@ namespace MeshWelderAutocad.Commands.LaserPT
                 if (line?.Start == null || line.End == null)
                     continue;
                 CreateLine(line.Start.X, line.Start.Y, line.End.X, line.End.Y, layerId);
+            }
+        }
+
+        private static void CreateCurves(IEnumerable<CurveDto> curves, ObjectId layerId)
+        {
+            foreach (CurveDto c in curves)
+            {
+                if (c == null)
+                    continue;
+                switch (c.Kind)
+                {
+                    case CurveDtoKind.Line:
+                        if (c.Start != null && c.End != null)
+                            CreateLine(c.Start.X, c.Start.Y, c.End.X, c.End.Y, layerId);
+                        break;
+                    case CurveDtoKind.Arc:
+                        if (c.Start != null && c.End != null && c.PointOnArc != null)
+                            TryCreateArcThreePoints(c.Start, c.PointOnArc, c.End, layerId);
+                        break;
+                }
+            }
+        }
+
+        private static void TryCreateArcThreePoints(Point2Dto a, Point2Dto mid, Point2Dto b, ObjectId layerId)
+        {
+            Point3d p1 = new Point3d(a.X, a.Y, 0);
+            Point3d p2 = new Point3d(mid.X, mid.Y, 0);
+            Point3d p3 = new Point3d(b.X, b.Y, 0);
+            try
+            {
+                using (CircularArc3d geo = new CircularArc3d(p1, p2, p3))
+                {
+                    Point3d center = geo.Center;
+                    double radius = geo.Radius;
+                    if (radius < 1e-9)
+                        return;
+                    Vector3d normal = geo.Normal;
+                    if (Math.Abs(Math.Abs(normal.Z) - 1.0) > 1e-6)
+                    {
+                        CreateLine(a.X, a.Y, b.X, b.Y, layerId);
+                        return;
+                    }
+                    Vector3d vStart = p1 - center;
+                    Vector3d vEnd = p3 - center;
+                    Vector3d refAxis = Vector3d.XAxis;
+                    double startAngle = refAxis.GetAngleTo(vStart, normal);
+                    double endAngle = refAxis.GetAngleTo(vEnd, normal);
+                    if (endAngle < startAngle)
+                        endAngle += Math.PI * 2.0;
+                    var arc = new Autodesk.AutoCAD.DatabaseServices.Arc(center, normal, radius, startAngle, endAngle)
+                    {
+                        LayerId = layerId
+                    };
+                    _modelSpace.AppendEntity(arc);
+                    _activeTransaction.AddNewlyCreatedDBObject(arc, true);
+                }
+            }
+            catch
+            {
+                CreateLine(a.X, a.Y, b.X, b.Y, layerId);
             }
         }
 
