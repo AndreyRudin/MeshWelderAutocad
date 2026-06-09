@@ -20,6 +20,7 @@ namespace MeshWelderAutocad.Commands.LaserMerge
     {
         private const string LayerFormwork = "Опалубка";
         private const string LayerZero = "0";
+        private const int ExtentRoundDigits = 5;
         private const double ExtentsTolerance = 0.0;
 
         private const string DefaultStructuralLaserFolder = @"C:\Users\Acer\Downloads\Vova\лазер обычный баги\3НСц-16_DWG-14.03.26__04-06-10";
@@ -394,12 +395,15 @@ namespace MeshWelderAutocad.Commands.LaserMerge
             if (!found) 
                 return false;
 
-            minX = combinedExtents.MinPoint.X;
-            maxX = combinedExtents.MaxPoint.X;
-            minY = combinedExtents.MinPoint.Y;
-            maxY = combinedExtents.MaxPoint.Y;
+            minX = RoundExtent(combinedExtents.MinPoint.X);
+            maxX = RoundExtent(combinedExtents.MaxPoint.X);
+            minY = RoundExtent(combinedExtents.MinPoint.Y);
+            maxY = RoundExtent(combinedExtents.MaxPoint.Y);
             return true;
         }
+
+        private static double RoundExtent(double value)
+            => Math.Round(value, ExtentRoundDigits, MidpointRounding.AwayFromZero);
 
         private static string GetLayerName(Transaction transaction, LayerTable layerTable, ObjectId layerId)
         {
