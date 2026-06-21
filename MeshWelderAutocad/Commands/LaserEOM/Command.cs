@@ -108,7 +108,7 @@ namespace MeshWelderAutocad.Commands.LaserEOM
             foreach (var box in boxes)
             {
                 ObjectId layerId = GetOrCreateLayerId(box.LayerName);
-                CreateCross(box.CenterX, box.CenterY, layerId);
+                CreatePlus(box.CenterX, box.CenterY, layerId);
             }
         }
 
@@ -156,6 +156,13 @@ namespace MeshWelderAutocad.Commands.LaserEOM
                     CreateLine(currentPipe.StartX, currentPipe.StartY, currentPipe.EndX, currentPipe.EndY, layerId);
                 }
             }
+        }
+
+        private static void CreatePlus(double centerX, double centerY, ObjectId layerId)
+        {
+            double halfLength = 100.0 / 2.0;
+            CreateLine(centerX - halfLength, centerY, centerX + halfLength, centerY, layerId);
+            CreateLine(centerX, centerY - halfLength, centerX, centerY + halfLength, layerId);
         }
 
         private static void CreateCross(double centerX, double centerY, ObjectId layerId)
