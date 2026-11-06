@@ -12,6 +12,10 @@ namespace MeshWelderAutocad
         public string RevitModelName { get; set; }
         public string PanelName { get; set; }
         public string PanelCode { get; set; }
+        /// <summary>
+        /// Комментарий стержней сетки. Для панелей кроме 3НС и 3НСц пустая строка.
+        /// </summary>
+        public string MeshComment { get; set; } = "";
         public List<MyRebar> Rebars { get; set; } = new List<MyRebar>();
     }
 }

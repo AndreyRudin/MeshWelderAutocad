@@ -73,12 +73,15 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 string jsonDirectory = Path.GetDirectoryName(jsonFilePath);
                 string timeStamp = DateTime.Now.ToString("dd.MM.yy__HH-mm-ss");
                 string generalDwgDirectory = Path.Combine(jsonDirectory, $"{meshs[0].RevitModelName}_DWG-{timeStamp}");
-                var plannedDxfPaths = new List<string>();
+                var usedDxfPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var meshPaths = new List<string>();
                 foreach (var mesh in meshs)
                 {
                     string directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
-                    plannedDxfPaths.Add(Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf"));
+                    string path = UniqueDxfPath(Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf"), usedDxfPaths);
+                    meshPaths.Add(path);
                 }
+                var plannedDxfPaths = meshPaths;
                 if (!ExportPathValidation.TryValidateDxfOutputPaths(plannedDxfPaths, out string pathLengthError))
                 {
                     MessageBox.Show(pathLengthError, "Ошибка");
@@ -89,13 +92,14 @@ namespace MeshWelderAutocad.Commands.MeshWelder
                 string templateDirectoryPath = HostApplicationServices.Current.GetEnvironmentVariable("TemplatePath");
                 string templatePath = Path.Combine(templateDirectoryPath, "acad.dwt");
 
-                foreach (var mesh in meshs)
+                for (int meshIndex = 0; meshIndex < meshs.Count; meshIndex++)
                 {
+                    Mesh mesh = meshs[meshIndex];
                     Document newDoc = acadApp.DocumentManager.Add(templatePath);
                     Database db = newDoc.Database;
 
                     var directoryDwgForPanel = Path.Combine(generalDwgDirectory, $"{mesh.PanelName}-{mesh.PanelCode}");
-                    var path = Path.Combine(directoryDwgForPanel, $"{mesh.DwgName}.dxf");
+                    var path = meshPaths[meshIndex];
 
                     using (DocumentLock docLock = newDoc.LockDocument())
                     {
@@ -148,6 +152,25 @@ namespace MeshWelderAutocad.Commands.MeshWelder
             {
                 MessageBox.Show(e.Message + e.StackTrace, "Системная ошибка");
             }
+        }
+
+        private static string UniqueDxfPath(string path, HashSet<string> usedPaths)
+        {
+            if (usedPaths.Add(path))
+                return path;
+
+            string directory = Path.GetDirectoryName(path);
+            string name = Path.GetFileNameWithoutExtension(path);
+            string extension = Path.GetExtension(path);
+            int index = 2;
+            string candidate;
+            do
+            {
+                candidate = Path.Combine(directory, $"{name}_{index}{extension}");
+                index++;
+            }
+            while (!usedPaths.Add(candidate));
+            return candidate;
         }
 
         private static SettingStorage ReadSettings()
