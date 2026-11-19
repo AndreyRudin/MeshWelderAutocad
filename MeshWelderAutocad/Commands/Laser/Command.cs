@@ -92,6 +92,8 @@ namespace MeshWelderAutocad.Commands.Laser
                                 CreateEmbeddedDetail9($"ЗД 1.9", _panel.EmbeddedParts9, _widthDetail9);
                             if (_panel.EmbeddedParts11.Count != 0)
                                 CreateEmbeddedDetail11($"ЗД 1.11");
+                            if (_panel.EmbeddedParts41.Count != 0)
+                                CreateEmbeddedDetail("ЗД 4.1", _panel.EmbeddedParts41);
                             if (_panel.UnionDetails.Count != 0)
                                 CreateEmbeddedDetail($"Объединенные ЗД", _panel.UnionDetails);
                             RotateModelSpaceCounterClockwiseAndMoveTo500();
